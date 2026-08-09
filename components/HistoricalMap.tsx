@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { geoMercator, geoPath } from 'd3-geo';
 import { feature } from 'topojson-client';
 import countries from 'world-atlas/countries-110m.json';
@@ -48,12 +48,19 @@ export type LayerMode = 'both' | 'cloud' | 'nodes';
 
 export function HistoricalMap({ wars, selectedWar, onSelect, layerMode, animations, onLayerMode, onAnimations }: { wars: WarEvent[]; selectedWar?: WarEvent; onSelect: (war: WarEvent) => void; layerMode: LayerMode; animations: boolean; onLayerMode: (mode: LayerMode) => void; onAnimations: (enabled: boolean) => void }) {
   const [zoom, setZoom] = useState(1);
+  const [legendOpen, setLegendOpen] = useState(false);
   const showClouds = layerMode === 'both' || layerMode === 'cloud';
   const showNodes = layerMode === 'both' || layerMode === 'nodes';
   const eventNodes = layoutEventNodes(wars);
   const nodeDensityClass = wars.length <= 5 ? 'map-nodes-sparse' : 'map-nodes-dense';
   const mapTransform = `translate(${MAP_WIDTH / 2} ${MAP_HEIGHT / 2}) scale(${zoom}) translate(${-MAP_WIDTH / 2} ${-MAP_HEIGHT / 2})`;
-  return <section className="map-frame relative aspect-[20/13] overflow-hidden" aria-label="中国历史战争地图">
+  useEffect(() => {
+    if (!legendOpen) return;
+    const closeOnEscape = (event: KeyboardEvent) => { if (event.key === 'Escape') setLegendOpen(false); };
+    window.addEventListener('keydown', closeOnEscape);
+    return () => window.removeEventListener('keydown', closeOnEscape);
+  }, [legendOpen]);
+  return <section className="map-frame relative aspect-[20/13] overflow-hidden" aria-label="中国历史战争地图" onClick={() => setLegendOpen(false)}>
     <div className="map-grid" />
     <svg viewBox={`0 0 ${MAP_WIDTH} ${MAP_HEIGHT}`} preserveAspectRatio="xMidYMid meet" className="absolute inset-0 h-full w-full" role="img" aria-label={`当前显示 ${wars.length} 个历史事件`}>
       <defs><filter id="mapGlow" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="5" result="blur" /><feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge></filter><radialGradient id="landTint" cx="45%" cy="35%" r="72%"><stop stopColor="#746044" /><stop offset="1" stopColor="#322a20" /></radialGradient><marker id="routeArrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#fde68a" /></marker></defs>
@@ -62,13 +69,14 @@ export function HistoricalMap({ wars, selectedWar, onSelect, layerMode, animatio
         {yangtzePath && <path d={yangtzePath} className="map-river" filter="url(#mapGlow)" />}{yellowRiverPath && <path d={yellowRiverPath} className="map-river map-river-subtle" />}
         {showClouds && <WarCloudLayer wars={wars} projection={projection} animated={animations} />}
         <RouteLayer war={selectedWar} projection={projection} animated={animations} />
-        {showNodes && <g className={nodeDensityClass}>{eventNodes.map(({ war, location, x, y }) => { const selected = war.id === selectedWar?.id; const radius = scaleSize[war.scale]; return <g key={`${war.id}-${location.id}`} className={`event-node ${selected ? 'event-node-selected' : ''}`} role="button" tabIndex={0} aria-label={`查看${war.name}详情`} onClick={() => onSelect(war)} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); onSelect(war); } }}><title>{war.name}：{war.summary}</title><circle cx={x} cy={y} r={radius + 7} fill={typeColor[war.type]} opacity=".12" /><circle cx={x} cy={y} r={radius} fill={typeColor[war.type]} className="event-node-core" /><text x={x} y={y + radius + 17} textAnchor="middle" className="event-node-label">{war.name}</text></g>; })}</g>}
+        {showNodes && <g className={nodeDensityClass}>{eventNodes.map(({ war, location, x, y }) => { const selected = war.id === selectedWar?.id; const radius = scaleSize[war.scale]; return <g key={`${war.id}-${location.id}`} className={`event-node ${selected ? 'event-node-selected' : ''}`} role="button" tabIndex={0} aria-label={`查看${war.name}详情`} onClick={() => onSelect(war)} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); onSelect(war); } }}><circle cx={x} cy={y} r={radius + 7} fill={typeColor[war.type]} opacity=".12" /><circle cx={x} cy={y} r={radius} fill={typeColor[war.type]} className="event-node-core" /><text x={x} y={y + radius + 17} textAnchor="middle" className="event-node-label">{war.name}</text></g>; })}</g>}
       </g>
     </svg>
-    <div className="map-toolbar" aria-label="地图显示控制"><div className="toolbar-group"><button className={layerMode === 'both' ? 'toolbar-active' : ''} onClick={() => onLayerMode('both')}>综合</button><button className={layerMode === 'cloud' ? 'toolbar-active' : ''} onClick={() => onLayerMode('cloud')}>云团</button><button className={layerMode === 'nodes' ? 'toolbar-active' : ''} onClick={() => onLayerMode('nodes')}>节点</button></div><button className={!animations ? 'toolbar-active' : ''} onClick={() => onAnimations(!animations)}>{animations ? '关闭动效' : '开启动效'}</button></div>
-    <div className="zoom-toolbar" aria-label="地图缩放"><button onClick={() => setZoom((value) => Math.min(1.65, value + .15))} aria-label="放大地图">＋</button><button onClick={() => setZoom((value) => Math.max(.85, value - .15))} aria-label="缩小地图">－</button><button onClick={() => setZoom(1)} aria-label="重置地图缩放">复位</button></div>
+    <div className="map-toolbar" aria-label="地图显示控制" onClick={(event) => event.stopPropagation()}><div className="toolbar-group"><button className={layerMode === 'both' ? 'toolbar-active' : ''} onClick={() => onLayerMode('both')}>综合</button><button className={layerMode === 'cloud' ? 'toolbar-active' : ''} onClick={() => onLayerMode('cloud')}>云团</button><button className={layerMode === 'nodes' ? 'toolbar-active' : ''} onClick={() => onLayerMode('nodes')}>节点</button></div><button className={!animations ? 'toolbar-active' : ''} onClick={() => onAnimations(!animations)}>{animations ? '关闭动效' : '开启动效'}</button></div>
+    <div className="zoom-toolbar" aria-label="地图缩放" onClick={(event) => event.stopPropagation()}><button onClick={() => setZoom((value) => Math.min(1.65, value + .15))} aria-label="放大地图">＋</button><button onClick={() => setZoom((value) => Math.max(.85, value - .15))} aria-label="缩小地图">－</button><button onClick={() => setZoom(1)} aria-label="重置地图缩放">复位</button></div>
     <div className="map-note"><p className="eyebrow">地理底图</p><p>Natural Earth 现代地理轮廓仅作定位参考，不表示秦汉行政边界。</p></div>
-    <Legend />
+    <button type="button" className="legend-toggle" aria-expanded={legendOpen} aria-controls="map-legend" onClick={(event) => { event.stopPropagation(); setLegendOpen((value) => !value); }}>图例</button>
+    <Legend open={legendOpen} onClose={() => setLegendOpen(false)} />
     <div className="map-credit">Natural Earth · 1:110m</div>
   </section>;
 }
