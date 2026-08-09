@@ -8,14 +8,16 @@
 | 项目 | 当前状态 |
 |---|---|
 | 公网网站 | https://war-map-sage.vercel.app 已上线 |
+| 试验镜像 | https://kuangami2.github.io/warMap/ 已上线 |
 | GitHub 仓库 | https://github.com/kuangami2/warMap |
 | Vercel 项目 | `shining3/war-map` |
 | 技术栈 | Next.js 16.3.0、React 18.3.1、TypeScript、Tailwind CSS |
 | 地图和数据 | 本地打包，无地图 API Key、数据库或运行时环境变量 |
 | 数据量 | 33 个秦统一至汉初事件，10 个事件含路线或多地点过程 |
-| 自动验证 | lint、类型检查、5 项测试、生产构建、安全审计 |
+| 自动验证 | lint、类型检查、5 项单元测试、6 环境浏览器矩阵、双构建、安全审计 |
 | 手动部署 | 已可用 |
-| GitHub 自动部署 | 需要你完成一次网页端授权 |
+| Vercel 自动部署 | 已连接 GitHub，推送 `main` 自动部署 |
+| Pages 镜像部署 | `npm run deploy:pages` 半自动更新 |
 
 ## 2. Codex 已经完成的工作
 
@@ -28,31 +30,22 @@
 7. 新增 `.vercelignore`，避免把本地依赖、缓存、构建目录和截图上传到 Vercel。
 8. 已将网站部署到现有 Vercel 项目并生成稳定 HTTPS 地址。
 9. 更新 README、部署说明和本手册。
+10. 完成手机端图例收起、地图上方首屏播放栏和更多控制折叠区。
+11. 建立微信、Android Chrome、iPhone WebKit 与桌面浏览器自动化矩阵。
+12. 建立 GitHub Pages 静态镜像和半自动发布命令。
 
-## 3. 你必须亲自完成的一项操作
+## 3. 当前不需要你完成强制操作
 
-### 授权 Vercel 访问 GitHub 仓库
+Vercel 与 GitHub 已经连接，GitHub Pages 镜像也已启用。当前代码、国际主站和试验镜像都可以继续维护。
 
-原因：GitHub App 的仓库授权属于你的 GitHub 账户安全权限，命令行不能代替账户所有者确认授权范围。网站已经上线，这一步只影响“推送代码后自动部署”。
+仍需注意：GitHub Pages 虽已通过当前电脑网络、香港/东京外部节点和浏览器矩阵，但不是已备案的国内 CDN。不同中国大陆运营商仍可能表现不同，最终可达性需要在你的实际手机网络中打开镜像确认。
 
-操作步骤：
-
-1. 打开 https://vercel.com 并使用当前已登录账号进入团队 `shining3`。
-2. 打开项目 `war-map`。
-3. 进入 **Settings → Git**。
-4. 点击 **Connect Git Repository**。
-5. 如果能看到 `kuangami2/warMap`，直接选择并连接。
-6. 如果看不到仓库，点击 GitHub 集成旁的 **Configure** 或 **Adjust GitHub App Permissions**。
-7. GitHub 会打开 Vercel App 配置页。选择账号 `kuangami2`，将 Repository access 设为 **Only select repositories**，勾选 `warMap`，然后保存。
-8. 返回 Vercel，再次选择 `kuangami2/warMap`。
-9. 确认 Production Branch 为 `main`，不添加环境变量，完成连接。
-10. 连接后，在 Vercel 的 Deployments 页面确认部署来源显示为 GitHub 提交，而不是 CLI。
-
-授权完成后的行为：
+当前发布行为：
 
 - 推送 `main`：自动更新生产网站；
 - 推送其他分支：生成独立预览网址；
 - Pull Request：自动生成预览部署，合并后再更新生产站。
+- 执行 `npm run deploy:pages`：更新 GitHub Pages 试验镜像。
 
 ## 4. 建议你自行决定的事项
 
@@ -89,6 +82,8 @@ npm run lint
 npm run typecheck
 npm test
 npm run build
+npm run build:static
+npm run test:browser:local
 npm audit
 ```
 
@@ -123,9 +118,8 @@ git push origin main
 - `.npm-cache/`
 - `.vercel/`
 - `coverage/`
-- `artifacts/`
 
-它们已被忽略。不要使用 `git add -f` 强制加入这些目录。
+前五项生成目录已被忽略。`artifacts/` 中保存项目认可的视觉回归基线，可能被 Git 跟踪；只在确认新界面正确后更新截图。
 
 多人协作时，建议从 `main` 创建功能分支并通过 Pull Request 合并，不要让多人直接修改 `main`。
 
@@ -147,6 +141,15 @@ npx --yes --registry=https://registry.npmmirror.com vercel@latest --prod --yes
 ```
 
 命令结束时应显示 Production URL。不要创建新的 Vercel 项目，本地 `.vercel/project.json` 已指向 `shining3/war-map`。
+
+### 更新 GitHub Pages 镜像
+
+```powershell
+cd D:\warMap
+npm run deploy:pages
+```
+
+完成后检查 https://kuangami2.github.io/warMap/。该命令只重建并更新 `gh-pages` 发布分支，不修改 `main` 历史。
 
 ## 8. 发布后验收清单
 

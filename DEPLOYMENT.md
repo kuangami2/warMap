@@ -6,15 +6,16 @@
 - 团队：`shining3`
 - 项目：`war-map`
 - 生产地址：https://war-map-sage.vercel.app
+- GitHub Pages 镜像：https://kuangami2.github.io/warMap/
 - GitHub 仓库：https://github.com/kuangami2/warMap
 - 框架：Next.js 16.3.0
 - Node.js：24.x
 
 项目不需要数据库、地图 API Key 或运行时环境变量。Natural Earth 地图数据和历史事件数据均随项目构建。
 
-## 推荐：GitHub 自动部署
+## Vercel：GitHub 自动部署
 
-完成一次 GitHub App 授权后，后续推送到 `main` 会自动触发生产部署，其他分支或 Pull Request 会生成预览部署。
+Vercel GitHub App 已连接仓库。后续推送到 `main` 会自动触发生产部署，其他分支或 Pull Request 会生成预览部署。
 
 1. 登录 Vercel，打开 `shining3/war-map`。
 2. 进入 **Settings → Git**。
@@ -23,6 +24,24 @@
 5. 回到 Vercel 再次连接仓库。
 6. Production Branch 选择 `main`，Framework Preset 保持 Next.js。
 7. 不需要配置环境变量。保存后推送一个提交，确认自动部署成功。
+
+## GitHub Pages 试验镜像
+
+GitHub Pages 使用 `gh-pages` 分支发布静态导出。由于本机 GitHub 凭据不包含 `workflow` scope，项目采用半自动发布，避免要求账户所有者重新授权高权限 Token。
+
+```powershell
+cd D:\warMap
+npm run deploy:pages
+```
+
+该命令会：
+
+1. 使用 `/warMap` 基础路径生成静态站点到 `out/`；
+2. 在系统临时目录创建独立 Git 仓库；
+3. 强制更新专用的 `gh-pages` 生成分支；
+4. 清理临时目录，不修改本地 `main` 工作区。
+
+不要手工编辑 `gh-pages`，它是可重复生成的发布分支。GitHub Pages 镜像用于国内可达性试验，不承诺替代已备案的国内云和 CDN。
 
 ## 手动生产部署
 
@@ -43,6 +62,8 @@ npm run lint
 npm run typecheck
 npm test
 npm run build
+npm run build:static
+npm run test:browser:local
 npm audit
 ```
 

@@ -274,3 +274,17 @@ D:\warMap
 - 完整的所有者操作、发布、回滚和故障排查说明见 `USER_DEPLOYMENT_GUIDE.md`。
 
 当前秦统一至汉初专题已达到可公开访问的 MVP 状态。后续重点从“能否上线”转为史料审校、历史政权范围图层、按专题加载、三国专题扩展、端到端测试和长期内容维护。
+
+---
+
+## 9. 2026-08-10 国内可达性与移动端优化
+
+- 手机端地图图例默认收起为小型按钮，支持关闭按钮、Escape 和地图空白关闭；
+- 手机端在地图上方提供首屏可见的年份、播放和进度控制，倍速与历史阶段收进“更多控制”；
+- 控制栏在正常状态下随滚动粘附，展开更多控制时回到文档流，避免遮挡大面积内容；
+- 建立微信 320px、Android Chrome 375px、iPhone WebKit 390/414px、桌面 1280/1600px 的自动化交互和视觉矩阵；
+- Vercel 国际主站继续使用 https://war-map-sage.vercel.app；
+- GitHub Pages 试验镜像已发布到 https://kuangami2.github.io/warMap/；
+- 镜像支持 `/warMap` 子路径静态资源，首页和关键 CSS 均返回 HTTP 200；
+- 香港、东京外部探测和本机 Chromium/WebKit 测试通过，但 GitHub Pages 仍不能等同于已备案的国内 CDN；
+- 由于现有 GitHub Token 缺少 `workflow` scope，Pages 使用 `npm run deploy:pages` 半自动发布，不要求用户扩大 Token 权限。
