@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "engines": {
-    "node": ">=20.19 <21"
+    "node": "24.x"
   },
   "scripts": {
     "dev": "next dev",
@@ -23,7 +23,7 @@
   },
   "devDependencies": {
     "@types/d3-geo": "3.1.0",
-    "@types/node": "20.14.12",
+    "@types/node": "24.13.3",
     "@types/react": "18.3.3",
     "@types/react-dom": "18.3.0",
     "@types/topojson-client": "3.1.4",
@@ -31,9 +31,12 @@
     "eslint": "9.39.1",
     "eslint-config-next": "16.3.0",
     "playwright-core": "1.46.0",
-    "postcss": "8.4.40",
+    "postcss": "8.5.26",
     "tailwindcss": "3.4.7",
     "typescript": "5.5.4",
-    "vitest": "2.0.5"
+    "vitest": "4.1.10"
+  },
+  "optionalDependencies": {
+    "@rolldown/binding-win32-x64-msvc": "1.2.3"
   }
 }
