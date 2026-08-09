@@ -22,11 +22,6 @@ export default function Home() {
   const visibleWars = useMemo(() => activeWars(wars, currentYear), [currentYear]);
 
   useEffect(() => {
-    const media = window.matchMedia('(prefers-reduced-motion: reduce)');
-    if (media.matches) setAnimations(false);
-  }, []);
-
-  useEffect(() => {
     if (!isPlaying) return;
     const timer = window.setInterval(() => setCurrentYear((year) => {
       if (year >= END_YEAR) { setIsPlaying(false); return END_YEAR; }
