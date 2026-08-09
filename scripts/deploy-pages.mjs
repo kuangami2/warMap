@@ -23,6 +23,7 @@ const deploymentDirectory = await mkdtemp(path.join(tmpdir(), 'war-map-pages-'))
 try {
   await cp(path.resolve('out'), deploymentDirectory, { recursive: true });
   await writeFile(path.join(deploymentDirectory, '.nojekyll'), '');
+  await writeFile(path.join(deploymentDirectory, 'vercel.json'), '{"ignoreCommand":"exit 0"}\n');
   run('git', ['init'], { cwd: deploymentDirectory });
   run('git', ['config', 'user.name', 'Codex Pages Publisher'], { cwd: deploymentDirectory });
   run('git', ['config', 'user.email', 'pages@war-map.local'], { cwd: deploymentDirectory });
