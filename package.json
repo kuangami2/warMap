@@ -15,7 +15,8 @@
     "typecheck": "next typegen && tsc --noEmit",
     "test": "vitest run",
     "test:browser": "node scripts/browser-matrix.mjs",
-    "test:browser:local": "node scripts/run-browser-matrix.mjs"
+    "test:browser:local": "node scripts/run-browser-matrix.mjs",
+    "test:webkit:diagnostic": "node scripts/webkit-diagnostic.mjs"
   },
   "dependencies": {
     "d3-geo": "3.1.1",

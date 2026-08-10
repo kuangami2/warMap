@@ -1,9 +1,49 @@
+import { formatYear } from '@/lib/timeline';
 import type { WarEvent } from '@/lib/types';
 
-export function StatsPanel({ wars }: { wars: WarEvent[] }) {
+const typeLabel: Record<WarEvent['type'], string> = {
+  unification: '统一战争',
+  rebellion: '起义',
+  'civil-war': '内战',
+  border: '边疆战事',
+  campaign: '军事行动',
+};
+
+type StatsPanelProps = {
+  wars: WarEvent[];
+  selectedWar?: WarEvent;
+  onSelect: (war: WarEvent) => void;
+  onHover: (war?: WarEvent) => void;
+};
+
+export function StatsPanel({ wars, selectedWar, onSelect, onHover }: StatsPanelProps) {
   const regions = new Set(wars.flatMap((war) => war.locations.map((location) => location.modernName?.split('，')[0] ?? location.name)));
   const routed = wars.filter((war) => war.routes?.length).length;
-  return <aside className="panel flex min-h-0 flex-col gap-5 p-5"><div><p className="eyebrow">当前窗口</p><h2 className="text-2xl font-semibold">战争态势</h2></div><div className="grid grid-cols-3 gap-2"><Stat label="事件" value={wars.length} /><Stat label="区域" value={regions.size} /><Stat label="路线" value={routed} /></div><div className="event-overview"><p className="eyebrow">事件速览</p>{wars.length ? wars.map((war) => <div className="border-l-2 border-amber-400/80 pl-3" key={war.id}><div className="flex items-center justify-between gap-2"><p className="font-medium text-stone-100">{war.name}</p><span className="scale-badge">{war.scale}</span></div><p className="mt-1 text-xs leading-5 text-stone-400">{war.summary}</p></div>) : <p className="text-sm text-stone-400">这一时间窗口暂未录入事件。继续向后拖动时间轴查看下一阶段。</p>}</div></aside>;
+
+  return <aside className="panel event-browser">
+    <div className="event-browser-header">
+      <div><p className="eyebrow">当前窗口</p><h2 className="text-xl font-semibold">事件速览</h2></div>
+      <span className="event-count">{wars.length} 个事件</span>
+    </div>
+    <div className="grid grid-cols-3 gap-2 px-4 pb-3"><Stat label="事件" value={wars.length} /><Stat label="区域" value={regions.size} /><Stat label="路线" value={routed} /></div>
+    <div className="event-overview" role="list" aria-label="当前年份事件列表">
+      {wars.length ? wars.map((war) => {
+        const selected = selectedWar?.id === war.id;
+        const place = war.locations[0];
+        return <button type="button" role="listitem" className={`event-card ${selected ? 'event-card-selected' : ''}`} key={war.id} onClick={() => onSelect(war)} onMouseEnter={() => onHover(war)} onMouseLeave={() => onHover(undefined)} onFocus={() => onHover(war)} onBlur={() => onHover(undefined)}>
+          <span className={`event-type-mark event-type-${war.type}`} />
+          <span className="event-card-content">
+            <span className="event-card-title-row"><strong>{war.name}</strong><span className="scale-badge">{war.scale}</span></span>
+            <span className="event-card-meta">{formatYear(war.startYear)}{war.endYear !== war.startYear ? `—${formatYear(war.endYear)}` : ''} · {typeLabel[war.type]}{place ? ` · ${place.name}` : ''}</span>
+            <span className="event-card-summary">{war.summary}</span>
+          </span>
+        </button>;
+      }) : <p className="event-empty">这一时间窗口暂未录入事件。继续向后拖动时间轴查看下一阶段。</p>}
+    </div>
+    <div className="event-browser-footer">悬停联动地图 · 点击查看完整详情</div>
+  </aside>;
 }
 
-function Stat({ label, value }: { label: string; value: number }) { return <div className="rounded-lg bg-stone-800/70 p-3"><p className="text-2xl font-semibold text-amber-200">{value}</p><p className="mt-1 text-xs text-stone-400">{label}</p></div>; }
+function Stat({ label, value }: { label: string; value: number }) {
+  return <div className="event-stat"><p>{value}</p><span>{label}</span></div>;
+}

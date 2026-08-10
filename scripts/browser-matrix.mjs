@@ -114,6 +114,15 @@ for (const profile of selectedProfiles) {
     ensure(await mobileTimeline.getByRole('button', { name: '暂停' }).isVisible(), `${profile.name}: playback did not start`);
     if (profile.primary) await capture(page, 'mobile-playing.png', false);
     await mobileTimeline.getByRole('button', { name: '暂停' }).click();
+    const firstMobileEvent = page.locator('.event-card').first();
+    await firstMobileEvent.scrollIntoViewIfNeeded();
+    await firstMobileEvent.click();
+    ensure(await page.getByRole('dialog').isVisible(), `${profile.name}: event detail drawer did not open`);
+    ensure(await page.locator('.detail-backdrop').isVisible(), `${profile.name}: detail backdrop is not visible`);
+    ensure(await page.evaluate(() => document.body.style.overflow === 'hidden'), `${profile.name}: background scroll was not locked`);
+    await page.keyboard.press('Escape');
+    ensure(!(await page.getByRole('dialog').isVisible()), `${profile.name}: Escape did not close event detail`);
+    ensure(await page.evaluate(() => document.body.style.overflow !== 'hidden'), `${profile.name}: background scroll lock was not restored`);
     await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
     await page.waitForTimeout(250);
     const stickyBox = await mobileTimeline.boundingBox();
@@ -124,6 +133,34 @@ for (const profile of selectedProfiles) {
     ensure(await page.locator('.desktop-timeline').isVisible(), `${profile.name}: desktop timeline is not visible`);
     ensure(!(await page.locator('.mobile-timeline-shell').isVisible()), `${profile.name}: mobile timeline should be hidden`);
     ensure(await page.locator('#map-legend').isVisible(), `${profile.name}: desktop legend is not visible`);
+    ensure(await page.getByText('台湾省', { exact: true }).isVisible(), `${profile.name}: Taiwan province is missing from the default map view`);
+    await page.locator('.desktop-timeline .timeline-range').evaluate((element) => {
+      const valueSetter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set;
+      valueSetter?.call(element, '-206');
+      element.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    await page.waitForTimeout(250);
+    ensure(await page.locator('.event-card').count() >= 4, `${profile.name}: event overview does not expose enough simultaneous events`);
+    const browserBox = await page.locator('.event-browser').boundingBox();
+    const overviewBox = await page.locator('.event-overview').boundingBox();
+    ensure(browserBox && overviewBox && overviewBox.height >= browserBox.height * .45, `${profile.name}: event overview is still vertically constrained`);
+    await page.locator('.event-overview').evaluate((element) => { element.scrollTop = 90; });
+    const firstDesktopEvent = page.locator('.event-card').nth(3);
+    await firstDesktopEvent.hover();
+    ensure(await page.locator('.event-node-active').count() > 0, `${profile.name}: list hover did not activate a map node`);
+    await firstDesktopEvent.click();
+    ensure(await page.getByRole('dialog').isVisible(), `${profile.name}: event detail drawer did not open`);
+    const scrollBefore = await page.locator('.event-overview').evaluate((element) => element.scrollTop);
+    await page.getByRole('button', { name: '关闭详情' }).click();
+    ensure(!(await page.getByRole('dialog').isVisible()), `${profile.name}: close button did not close event detail`);
+    const scrollAfter = await page.locator('.event-overview').evaluate((element) => element.scrollTop);
+    ensure(Math.abs(scrollAfter - scrollBefore) <= 2, `${profile.name}: event list scroll position was not preserved (${scrollBefore} -> ${scrollAfter})`);
+    await page.getByRole('button', { name: '关闭动效' }).click();
+    ensure(await page.getByRole('button', { name: '开启动效' }).isVisible(), `${profile.name}: animation toggle did not update`);
+    const zoomIn = page.getByRole('button', { name: '放大地图' });
+    await zoomIn.click();
+    await zoomIn.click();
+    ensure(await page.getByText('台湾省', { exact: true }).isVisible(), `${profile.name}: Taiwan province disappeared after zooming`);
   }
 
   ensure(runtimeErrors.length === 0, `${profile.name}: ${runtimeErrors.join('; ')}`);

@@ -24,6 +24,23 @@ try {
     ? [process.env.PROFILE_FILTER]
     : ['wechat-320,android-chrome-375,desktop-1280,desktop-1600', 'iphone-webkit-390,iphone-webkit-414'];
   for (const profileFilter of profileGroups) {
+    if (profileFilter.includes('webkit')) {
+      const diagnostic = spawn(process.execPath, ['scripts/webkit-diagnostic.mjs'], {
+        cwd: process.cwd(),
+        env: { ...process.env, TEST_BASE_URL: baseUrl },
+        stdio: 'inherit',
+        windowsHide: true,
+      });
+      const diagnosticCode = await new Promise((resolve) => diagnostic.once('exit', (code) => resolve(code ?? 1)));
+      if (diagnosticCode === 2) {
+        process.stdout.write('WebKit profiles skipped: diagnostic classified the local Playwright WebKit runtime as infrastructure failure.\n');
+        continue;
+      }
+      if (diagnosticCode !== 0) {
+        process.exitCode = diagnosticCode;
+        break;
+      }
+    }
     const tests = spawn(process.execPath, ['scripts/browser-matrix.mjs'], {
       cwd: process.cwd(),
       env: { ...process.env, TEST_BASE_URL: baseUrl, PROFILE_FILTER: profileFilter },
