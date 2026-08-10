@@ -97,7 +97,9 @@ for (const profile of selectedProfiles) {
     await page.keyboard.press('Escape');
     ensure(!(await page.locator('#map-legend').isVisible()), `${profile.name}: Escape did not close the legend`);
     await legendToggle.click();
-    await page.locator('.map-frame').click({ position: { x: profile.viewport.width * 0.72, y: 90 } });
+    const mapBox = await page.locator('.map-frame').boundingBox();
+    ensure(mapBox, `${profile.name}: map frame has no dimensions`);
+    await page.locator('.map-frame').click({ position: { x: mapBox.width - 18, y: mapBox.height - 18 } });
     ensure(!(await page.locator('#map-legend').isVisible()), `${profile.name}: map click did not close the legend`);
 
     const moreControls = mobileTimeline.locator('.mobile-timeline-more');
@@ -134,13 +136,27 @@ for (const profile of selectedProfiles) {
     ensure(!(await page.locator('.mobile-timeline-shell').isVisible()), `${profile.name}: mobile timeline should be hidden`);
     ensure(await page.locator('#map-legend').isVisible(), `${profile.name}: desktop legend is not visible`);
     ensure(await page.getByText('台湾省', { exact: true }).isVisible(), `${profile.name}: Taiwan province is missing from the default map view`);
-    await page.locator('.desktop-timeline .timeline-range').evaluate((element) => {
-      const valueSetter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set;
-      valueSetter?.call(element, '-206');
-      element.dispatchEvent(new Event('input', { bubbles: true }));
-    });
-    await page.waitForTimeout(250);
+    const desktopRange = page.locator('.desktop-timeline .timeline-range');
+    const territoryStages = [
+      { year: '-230', polityId: 'han-state' },
+      { year: '-220', polityId: 'qin' },
+      { year: '-209', polityId: 'zhangchu' },
+      { year: '-201', polityId: 'xiongnu' },
+      { year: '-206', polityId: 'western-chu' },
+    ];
+    for (const stage of territoryStages) {
+      await desktopRange.evaluate((element, year) => {
+        const valueSetter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set;
+        valueSetter?.call(element, year);
+        element.dispatchEvent(new Event('input', { bubbles: true }));
+      }, stage.year);
+      await page.waitForTimeout(450);
+      ensure(await page.locator(`[data-polity-id="${stage.polityId}"].territory-current`).count() === 1, `${profile.name}: territory stage ${stage.year} is missing ${stage.polityId}`);
+    }
     ensure(await page.locator('.event-card').count() >= 4, `${profile.name}: event overview does not expose enough simultaneous events`);
+    ensure(await page.locator('.territory-current').count() >= 2, `${profile.name}: Chu-Han territory layer is missing`);
+    ensure(await page.locator('[data-polity-id="han"].territory-current').count() === 1, `${profile.name}: Han territory is missing`);
+    ensure(await page.locator('[data-polity-id="western-chu"].territory-current').count() === 1, `${profile.name}: Western Chu territory is missing`);
     const browserBox = await page.locator('.event-browser').boundingBox();
     const overviewBox = await page.locator('.event-overview').boundingBox();
     ensure(browserBox && overviewBox && overviewBox.height >= browserBox.height * .45, `${profile.name}: event overview is still vertically constrained`);
@@ -150,11 +166,20 @@ for (const profile of selectedProfiles) {
     ensure(await page.locator('.event-node-active').count() > 0, `${profile.name}: list hover did not activate a map node`);
     await firstDesktopEvent.click();
     ensure(await page.getByRole('dialog').isVisible(), `${profile.name}: event detail drawer did not open`);
+    ensure(await page.locator('.territory-active').count() > 0, `${profile.name}: selected event did not highlight related territory`);
+    ensure(await page.locator('.territory-muted').count() > 0, `${profile.name}: selected event did not mute unrelated territory`);
     const scrollBefore = await page.locator('.event-overview').evaluate((element) => element.scrollTop);
     await page.getByRole('button', { name: '关闭详情' }).click();
     ensure(!(await page.getByRole('dialog').isVisible()), `${profile.name}: close button did not close event detail`);
     const scrollAfter = await page.locator('.event-overview').evaluate((element) => element.scrollTop);
     ensure(Math.abs(scrollAfter - scrollBefore) <= 2, `${profile.name}: event list scroll position was not preserved (${scrollBefore} -> ${scrollAfter})`);
+    const territoryToggle = page.getByRole('button', { name: '势力', exact: true });
+    await territoryToggle.click();
+    ensure((await territoryToggle.getAttribute('aria-pressed')) === 'false', `${profile.name}: territory toggle did not turn off`);
+    ensure(await page.locator('.territory-layer').count() === 0, `${profile.name}: territory layer remained after being disabled`);
+    ensure(await page.locator('.event-node').count() > 0, `${profile.name}: disabling territory hid event nodes`);
+    await territoryToggle.click();
+    ensure((await territoryToggle.getAttribute('aria-pressed')) === 'true', `${profile.name}: territory toggle did not turn back on`);
     await page.getByRole('button', { name: '关闭动效' }).click();
     ensure(await page.getByRole('button', { name: '开启动效' }).isVisible(), `${profile.name}: animation toggle did not update`);
     const zoomIn = page.getByRole('button', { name: '放大地图' });

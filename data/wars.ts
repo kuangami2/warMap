@@ -6,13 +6,29 @@ type EventInput = {
   confidence?: Confidence; estimate?: string; tags: string[];
 };
 
+function inferPolityId(name: string): string | undefined {
+  if (name.includes('韩信') || name.includes('刘邦') || name.includes('汉军') || name.includes('汉廷') || name.includes('汉联盟')) return 'han';
+  if (name.includes('项羽') || name.includes('西楚') || name.includes('楚军')) return 'western-chu';
+  if (name.includes('陈胜') || name.includes('吴广') || name.includes('张楚') || name.includes('反秦')) return 'zhangchu';
+  if (name.includes('匈奴')) return 'xiongnu';
+  if (name.includes('南越')) return 'nanyue';
+  if (name.includes('秦')) return 'qin';
+  if (name === '韩' || name.includes('韩国')) return 'han-state';
+  if (name.includes('赵')) return 'zhao';
+  if (name.includes('魏')) return 'wei';
+  if (name.includes('燕')) return 'yan';
+  if (name.includes('齐')) return 'qi';
+  if (name.includes('楚')) return 'chu';
+  return undefined;
+}
+
 function event(input: EventInput): WarEvent {
   const [name, modernName, latitude, longitude, role] = input.place;
   const sources: Source[] = [{ title: input.source }];
   return {
     id: input.id, name: input.name, startYear: input.years[0], endYear: input.years[1], type: input.type, scale: input.scale,
     confidence: input.confidence ?? 'high', summary: input.summary, background: input.background, result: input.result, impact: input.impact,
-    participants: input.sides.map((side, index) => ({ id: `${input.id}-${index}`, name: side })),
+    participants: input.sides.map((side, index) => ({ id: `${input.id}-${index}`, name: side, polityId: inferPolityId(side) })),
     locations: [{ id: `${input.id}-location`, name, modernName, latitude, longitude, role }],
     troopEstimate: input.estimate ? { display: input.estimate } : undefined, routes: routesByEvent[input.id], sources, tags: input.tags,
   };

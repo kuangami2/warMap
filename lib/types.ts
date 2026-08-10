@@ -11,7 +11,7 @@ export type Location = {
   role: 'capital' | 'battlefield' | 'siege' | 'origin' | 'destination' | 'region';
 };
 
-export type Participant = { id: string; name: string; side?: string };
+export type Participant = { id: string; name: string; side?: string; polityId?: string };
 export type Source = { title: string; note?: string };
 export type Estimate = { display: string; note?: string };
 export type RoutePoint = { name: string; latitude: number; longitude: number };
@@ -38,3 +38,27 @@ export type WarEvent = {
 };
 
 export type Era = { id: string; name: string; startYear: number; endYear: number; description: string };
+
+export type Polity = {
+  id: string;
+  name: string;
+  shortName: string;
+  color: string;
+  labelColor: string;
+  textColor: string;
+};
+
+export type GeoPolygon = { type: 'Polygon'; coordinates: number[][][] };
+export type GeoMultiPolygon = { type: 'MultiPolygon'; coordinates: number[][][][] };
+
+export type TerritorySnapshot = {
+  id: string;
+  polityId: string;
+  startYear: number;
+  endYear: number;
+  geometry: GeoPolygon | GeoMultiPolygon;
+  labelPosition?: [number, number];
+  description: string;
+  confidence: Confidence;
+  sources: Source[];
+};

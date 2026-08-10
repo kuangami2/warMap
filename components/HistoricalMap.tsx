@@ -6,8 +6,9 @@ import { feature } from 'topojson-client';
 import countries from 'world-atlas/countries-110m.json';
 import { Legend } from '@/components/Legend';
 import { RouteLayer } from '@/components/RouteLayer';
+import { TerritoryLayer } from '@/components/TerritoryLayer';
 import { WarCloudLayer } from '@/components/WarCloudLayer';
-import type { WarEvent } from '@/lib/types';
+import type { Polity, TerritorySnapshot, WarEvent } from '@/lib/types';
 
 const MAP_WIDTH = 800;
 const MAP_HEIGHT = 520;
@@ -50,29 +51,31 @@ function layoutEventNodes(wars: WarEvent[]) {
   }));
 }
 
-export type LayerMode = 'both' | 'cloud' | 'nodes';
+export type MapLayers = { territories: boolean; clouds: boolean; nodes: boolean; routes: boolean };
 
 type HistoricalMapProps = {
   wars: WarEvent[];
+  territories: TerritorySnapshot[];
+  polities: Polity[];
   selectedWar?: WarEvent;
   hoveredWar?: WarEvent;
   onSelect: (war: WarEvent) => void;
   onHover: (war?: WarEvent) => void;
-  layerMode: LayerMode;
+  layers: MapLayers;
   animations: boolean;
-  onLayerMode: (mode: LayerMode) => void;
+  onLayers: (layers: MapLayers) => void;
   onAnimations: (enabled: boolean) => void;
 };
 
-export function HistoricalMap({ wars, selectedWar, hoveredWar, onSelect, onHover, layerMode, animations, onLayerMode, onAnimations }: HistoricalMapProps) {
+export function HistoricalMap({ wars, territories, polities, selectedWar, hoveredWar, onSelect, onHover, layers, animations, onLayers, onAnimations }: HistoricalMapProps) {
   const [zoom, setZoom] = useState(1);
   const [legendOpen, setLegendOpen] = useState(false);
-  const showClouds = layerMode === 'both' || layerMode === 'cloud';
-  const showNodes = layerMode === 'both' || layerMode === 'nodes';
   const eventNodes = useMemo(() => layoutEventNodes(wars), [wars]);
   const nodeDensityClass = wars.length <= 5 ? 'map-nodes-sparse' : 'map-nodes-dense';
   const mapTransform = `translate(${MAP_WIDTH / 2} ${MAP_HEIGHT / 2}) scale(${zoom}) translate(${-MAP_WIDTH / 2} ${-MAP_HEIGHT / 2})`;
   const activeWar = hoveredWar ?? selectedWar;
+  const activePolityIds = useMemo(() => Array.from(new Set(activeWar?.participants.map((participant) => participant.polityId).filter(Boolean) as string[] ?? [])), [activeWar]);
+  const toggleLayer = (layer: keyof MapLayers) => onLayers({ ...layers, [layer]: !layers[layer] });
 
   useEffect(() => {
     if (!legendOpen) return;
@@ -95,11 +98,12 @@ export function HistoricalMap({ wars, selectedWar, hoveredWar, onSelect, onHover
       <g transform={mapTransform} className="map-zoom-layer">
         <g filter="url(#landShadow)">{mainlandPath && <path d={mainlandPath} className="map-land-real" />}{taiwanPath && <path d={taiwanPath} className="map-land-real map-land-taiwan" />}</g>
         {mainlandPath && <path d={mainlandPath} className="map-coast-highlight" />}{taiwanPath && <path d={taiwanPath} className="map-coast-highlight" />}
+        {layers.territories && <TerritoryLayer territories={territories} polities={polities} projection={projection} activePolityIds={activePolityIds} animated={animations} />}
         {yangtzePath && <path d={yangtzePath} className="map-river" filter="url(#mapGlow)" />}{yellowRiverPath && <path d={yellowRiverPath} className="map-river map-river-subtle" />}
         {taiwanLabelPoint && <text x={taiwanLabelPoint[0] + 12} y={taiwanLabelPoint[1] + 2} className="map-region-label">台湾省</text>}
-        {showClouds && <WarCloudLayer wars={wars} projection={projection} animated={animations} activeWarId={activeWar?.id} />}
-        <RouteLayer war={selectedWar} projection={projection} animated={animations} />
-        {showNodes && <g className={nodeDensityClass}>{eventNodes.map(({ war, location, x, y }) => {
+        {layers.clouds && <WarCloudLayer wars={wars} projection={projection} animated={animations} activeWarId={activeWar?.id} />}
+        {layers.routes && <RouteLayer war={selectedWar} projection={projection} animated={animations} />}
+        {layers.nodes && <g className={nodeDensityClass}>{eventNodes.map(({ war, location, x, y }) => {
           const selected = war.id === selectedWar?.id;
           const active = war.id === activeWar?.id;
           const muted = Boolean(activeWar && !active);
@@ -113,11 +117,11 @@ export function HistoricalMap({ wars, selectedWar, hoveredWar, onSelect, onHover
         })}</g>}
       </g>
     </svg>
-    <div className="map-toolbar" aria-label="地图显示控制" onClick={(event) => event.stopPropagation()}><div className="toolbar-group"><button className={layerMode === 'both' ? 'toolbar-active' : ''} onClick={() => onLayerMode('both')}>综合</button><button className={layerMode === 'cloud' ? 'toolbar-active' : ''} onClick={() => onLayerMode('cloud')}>热区</button><button className={layerMode === 'nodes' ? 'toolbar-active' : ''} onClick={() => onLayerMode('nodes')}>事件</button></div><button className={!animations ? 'toolbar-active' : ''} onClick={() => onAnimations(!animations)}>{animations ? '关闭动效' : '开启动效'}</button></div>
+    <div className="map-toolbar" aria-label="地图显示控制" onClick={(event) => event.stopPropagation()}><div className="toolbar-group"><button className={layers.territories ? 'toolbar-active' : ''} aria-pressed={layers.territories} onClick={() => toggleLayer('territories')}>势力</button><button className={layers.clouds ? 'toolbar-active' : ''} aria-pressed={layers.clouds} onClick={() => toggleLayer('clouds')}>热区</button><button className={layers.nodes ? 'toolbar-active' : ''} aria-pressed={layers.nodes} onClick={() => toggleLayer('nodes')}>事件</button><button className={layers.routes ? 'toolbar-active' : ''} aria-pressed={layers.routes} onClick={() => toggleLayer('routes')}>路线</button></div><button className={!animations ? 'toolbar-active' : ''} onClick={() => onAnimations(!animations)}>{animations ? '关闭动效' : '开启动效'}</button></div>
     <div className="zoom-toolbar" aria-label="地图缩放" onClick={(event) => event.stopPropagation()}><button onClick={() => setZoom((value) => Math.min(1.65, value + .15))} aria-label="放大地图">＋</button><button onClick={() => setZoom((value) => Math.max(.85, value - .15))} aria-label="缩小地图">－</button><button onClick={() => setZoom(1)} aria-label="重置地图缩放">复位</button></div>
     <div className="map-note"><p className="eyebrow">地理底图</p><p>现代地理轮廓用于辅助定位，台湾省已纳入统一地图层；历史政权边界不以此底图代替。</p></div>
     <button type="button" className="legend-toggle" aria-expanded={legendOpen} aria-controls="map-legend" onClick={(event) => { event.stopPropagation(); setLegendOpen((value) => !value); }}>图例</button>
-    <Legend open={legendOpen} onClose={() => setLegendOpen(false)} />
+    <Legend open={legendOpen} territories={territories} polities={polities} onClose={() => setLegendOpen(false)} />
     <div className="map-credit">Natural Earth · 1:110m</div>
   </section>;
 }

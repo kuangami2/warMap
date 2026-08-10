@@ -1,0 +1,24 @@
+import type { TerritorySnapshot } from '@/lib/types';
+
+const source = (note: string) => [{ title: '谭其骧主编《中国历史地图集》及相关先秦秦汉历史地理研究', note }];
+const clockwise = (coordinates: number[][]) => [...coordinates].reverse();
+const polygon = (coordinates: number[][]): TerritorySnapshot['geometry'] => ({ type: 'Polygon', coordinates: [clockwise(coordinates)] });
+const multiPolygon = (polygons: number[][][]): TerritorySnapshot['geometry'] => ({ type: 'MultiPolygon', coordinates: polygons.map((coordinates) => [clockwise(coordinates)]) });
+
+export const territories: TerritorySnapshot[] = [
+  { id: 'qin-unification', polityId: 'qin', startYear: -230, endYear: -221, geometry: polygon([[92,34],[99,29],[108,28],[113,32],[112,38],[106,41],[99,40],[92,34]]), labelPosition: [104,35], description: '秦统一战争阶段的核心控制区及逐步东进范围示意。', confidence: 'medium', sources: source('边界仅表达大致控制范围，并随战事快速变化。') },
+  { id: 'han-state-final', polityId: 'han-state', startYear: -230, endYear: -230, geometry: polygon([[111.5,32.5],[115,32.7],[115.5,35],[112.5,35.2],[111.5,32.5]]), labelPosition: [113.5,34], description: '韩国灭亡前的大致范围。', confidence: 'medium', sources: source('采用战国晚期韩国范围的概括表达。') },
+  { id: 'zhao-final', polityId: 'zhao', startYear: -230, endYear: -228, geometry: polygon([[110,35],[115,35],[117,40],[112,41.5],[109,39],[110,35]]), labelPosition: [113,38], description: '赵国主体覆亡前的大致范围。', confidence: 'medium', sources: source('不表达代地残余势力的逐县变化。') },
+  { id: 'wei-final', polityId: 'wei', startYear: -230, endYear: -225, geometry: polygon([[112.5,32.5],[116.5,32.5],[117,36],[113.5,36],[112.5,32.5]]), labelPosition: [115,34.5], description: '魏国灭亡前的大致范围。', confidence: 'medium', sources: source('黄河中下游边界为概括示意。') },
+  { id: 'chu-final', polityId: 'chu', startYear: -230, endYear: -223, geometry: polygon([[105,23],[116,22],[121,27],[119,33],[112,34],[106,31],[105,23]]), labelPosition: [113,28], description: '楚国晚期南方控制范围示意。', confidence: 'medium', sources: source('楚国疆域辽阔且地方控制程度不一。') },
+  { id: 'yan-final', polityId: 'yan', startYear: -230, endYear: -222, geometry: polygon([[115,39],[122,39],[125,43],[119,44],[115,42],[115,39]]), labelPosition: [120,41.5], description: '燕国灭亡前的大致范围。', confidence: 'medium', sources: source('辽东等地以概括轮廓表示。') },
+  { id: 'qi-final', polityId: 'qi', startYear: -230, endYear: -221, geometry: polygon([[116,34],[122,34],[123,38],[119,39],[116,37],[116,34]]), labelPosition: [119.5,36.5], description: '齐国灭亡前的大致范围。', confidence: 'medium', sources: source('采用齐国晚期山东地区范围示意。') },
+  { id: 'qin-empire', polityId: 'qin', startYear: -220, endYear: -210, geometry: polygon([[87,41],[94,28],[104,21],[116,21],[122,27],[123,40],[117,43],[108,42],[101,44],[94,43],[87,41]]), labelPosition: [106,34], description: '秦帝国统一后的主要控制范围示意。', confidence: 'medium', sources: source('不表示郡县边界，也不等同于稳定的实际控制线。') },
+  { id: 'qin-collapse-core', polityId: 'qin', startYear: -209, endYear: -207, geometry: polygon([[97,31],[110,29],[114,34],[111,39],[103,40],[97,36],[97,31]]), labelPosition: [106,35], description: '秦末动荡期间中央仍能维持的核心范围示意。', confidence: 'low', sources: source('秦末控制范围变化极快，本图仅作阶段性概括。') },
+  { id: 'zhangchu-uprisings', polityId: 'zhangchu', startYear: -209, endYear: -207, geometry: multiPolygon([[[112,30],[119,30],[121,35],[117,38],[112,35],[112,30]],[[117,37],[122,36],[122,40],[118,41],[117,37]]]), labelPosition: [117,34], description: '张楚及各地反秦力量活跃区域示意。', confidence: 'low', sources: source('各支力量并非统一政权，范围表示主要活动区。') },
+  { id: 'han-chu-han', polityId: 'han', startYear: -206, endYear: -202, geometry: polygon([[98,28],[109,27],[114,31],[112,37],[105,39],[99,35],[98,28]]), labelPosition: [106,33], description: '楚汉战争阶段汉方主要控制与经营区域示意。', confidence: 'low', sources: source('战线反复变化，按阶段性格局概括。') },
+  { id: 'western-chu-hegemony', polityId: 'western-chu', startYear: -206, endYear: -202, geometry: polygon([[110,27],[121,29],[122,37],[117,40],[112,37],[110,33],[110,27]]), labelPosition: [117,34], description: '西楚及其主要影响区域示意。', confidence: 'low', sources: source('诸侯归属和军事控制频繁变化。') },
+  { id: 'han-rebuild', polityId: 'han', startYear: -201, endYear: -180, geometry: polygon([[90,40],[96,27],[105,21],[116,22],[122,28],[122,40],[116,43],[106,42],[98,44],[90,40]]), labelPosition: [108,34], description: '汉初中央及诸侯王国共同构成的主要统治范围示意。', confidence: 'medium', sources: source('不区分中央直辖与诸侯王国边界。') },
+  { id: 'xiongnu-early-han', polityId: 'xiongnu', startYear: -201, endYear: -180, geometry: polygon([[87,42],[99,40],[110,42],[119,45],[117,49],[105,51],[93,49],[87,42]]), labelPosition: [105,46], description: '汉初匈奴主要活动和控制区域的南缘示意。', confidence: 'low', sources: source('游牧政治空间不宜理解为固定国界。') },
+  { id: 'nanyue-early-han', polityId: 'nanyue', startYear: -201, endYear: -180, geometry: polygon([[104,20],[114,19],[116,24],[111,27],[105,25],[104,20]]), labelPosition: [110,23], description: '汉初南越政权的大致范围示意。', confidence: 'medium', sources: source('南部边缘及地方控制程度采用概括表达。') },
+];
