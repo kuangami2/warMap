@@ -1,0 +1,19 @@
+{
+  "version": "2.3.0",
+  "packages": [
+    "qin-han",
+    "han-three-kingdoms"
+  ],
+  "counts": {
+    "qinEvents": 39,
+    "hanEvents": 51,
+    "threeKingdomsEvents": 60,
+    "hanPlaces": 59,
+    "territories": 35,
+    "threeKingdomsNarrativeReferences": 23
+  },
+  "modernReferenceGzipBytes": 2728,
+  "historicalGis": "disabled-awaiting-license",
+  "staticIndexBytes": 72976,
+  "status": "passed"
+}

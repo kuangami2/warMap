@@ -63,6 +63,8 @@ npm run typecheck
 npm test
 npm run build
 npm run build:static
+npm run check:static-budget
+npm run audit:release-candidate
 npm run test:browser:local
 npm audit
 ```
@@ -74,6 +76,23 @@ npm audit
 - 播放、年份拖动、地图模式切换和事件详情可操作；
 - 手机宽度下无关键控件被遮挡；
 - 浏览器控制台没有资源 404 或运行时错误。
+
+## 2.0 发布候选演练与能力边界
+
+本仓库的 2.0 候选版本使用静态、本地可追溯数据：Natural Earth 1:10m 自然地理、Natural Earth 1:50m 现代参考地名、历史地点参考点、势力活动示意、事件与叙事。它**不包含精确历史行政区面**。
+
+历史 GIS 授权闸门当前关闭：已核对的 CHGIS 许可禁止再分发，未发现可公开展示和静态再分发的两汉三国边界包。因此发布说明、图例、控件与页面不得宣称“精确历史行政区地图”，也不得将势力面改称为郡县边界。
+
+在不修改远端状态的情况下，可完成以下本地演练：
+
+```powershell
+cd D:\warMap
+npm run build:static
+npm run check:static-budget
+npm run audit:release-candidate
+```
+
+GitHub Pages 的基础路径构建可由现有发布脚本完成，但 `npm run deploy:pages` 的最后一步会推送 `gh-pages`；仅在项目所有者明确授权发布时执行。Vercel 的生产命令同样属于外部发布，需单独授权。
 
 ## Vercel 上传范围
 

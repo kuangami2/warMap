@@ -1,5 +1,6 @@
 import { formatYear } from '@/lib/timeline';
 import type { WarEvent } from '@/lib/types';
+import type { TimelineContext } from '@/lib/timeline-context';
 
 const typeLabel: Record<WarEvent['type'], string> = {
   unification: '统一战争',
@@ -11,12 +12,14 @@ const typeLabel: Record<WarEvent['type'], string> = {
 
 type StatsPanelProps = {
   wars: WarEvent[];
+  territoryCount: number;
   selectedWar?: WarEvent;
+  context: TimelineContext;
   onSelect: (war: WarEvent) => void;
   onHover: (war?: WarEvent) => void;
 };
 
-export function StatsPanel({ wars, selectedWar, onSelect, onHover }: StatsPanelProps) {
+export function StatsPanel({ wars, territoryCount, selectedWar, context, onSelect, onHover }: StatsPanelProps) {
   const regions = new Set(wars.flatMap((war) => war.locations.map((location) => location.modernName?.split('，')[0] ?? location.name)));
   const routed = wars.filter((war) => war.routes?.length).length;
 
@@ -38,7 +41,7 @@ export function StatsPanel({ wars, selectedWar, onSelect, onHover }: StatsPanelP
             <span className="event-card-summary">{war.summary}</span>
           </span>
         </button>;
-      }) : <p className="event-empty">这一时间窗口暂未录入事件。继续向后拖动时间轴查看下一阶段。</p>}
+      }) : <p className="event-empty">{context.note}{territoryCount > 0 ? `仍有 ${territoryCount} 个势力范围快照可供参考。` : ''}继续拖动时间轴查看其他阶段。</p>}
     </div>
     <div className="event-browser-footer">悬停联动地图 · 点击查看完整详情</div>
   </aside>;

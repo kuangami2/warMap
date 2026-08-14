@@ -1,0 +1,17 @@
+{
+  "label": "pre-v2.1.0 development baseline",
+  "capturedAt": "2026-08-14",
+  "totalBytes": 1485443,
+  "javaScriptGzipBytes": 440778,
+  "largestAssetBytes": 554450,
+  "largestAsset": "out/_next/static/chunks/35awe5ikk-o8e.js",
+  "physicalVectorGzipBytes": 202086,
+  "fileCount": 27,
+  "javaScriptChunkCount": 14,
+  "constraints": {
+    "totalBytes": 3145728,
+    "javaScriptGzipBytes": 460800,
+    "largestAssetBytes": 921600,
+    "physicalVectorGzipBytes": 460800
+  }
+}

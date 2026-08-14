@@ -17,6 +17,7 @@ function output(command, args) {
 run(process.execPath, ['scripts/build-static.mjs'], {
   env: { ...process.env, GITHUB_PAGES: 'true' },
 });
+run(process.execPath, ['scripts/check-static-budget.mjs']);
 
 const deploymentDirectory = await mkdtemp(path.join(tmpdir(), 'war-map-pages-'));
 

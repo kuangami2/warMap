@@ -24,9 +24,9 @@ function aggregateClouds(wars: WarEvent[], projection: GeoProjection): Cloud[] {
   });
 }
 
-export function WarCloudLayer({ wars, projection, animated, activeWarId }: { wars: WarEvent[]; projection: GeoProjection; animated: boolean; activeWarId?: string }) {
+export function WarCloudLayer({ wars, projection, animated, activeWarId, detail }: { wars: WarEvent[]; projection: GeoProjection; animated: boolean; activeWarId?: string; detail: 'overview' | 'regional' | 'local' }) {
   const clouds = aggregateClouds(wars, projection);
-  return <g className={animated ? 'cloud-layer cloud-layer-animated' : 'cloud-layer'} aria-hidden="true">
+  return <g className={`${animated ? 'cloud-layer cloud-layer-animated' : 'cloud-layer'} cloud-detail-${detail}`} aria-hidden="true">
     <defs>{clouds.map((cloud) => <radialGradient id={`cloud-${cloud.id}`} key={cloud.id}><stop offset="0" stopColor={cloud.color} stopOpacity=".38" /><stop offset=".35" stopColor={cloud.color} stopOpacity=".2" /><stop offset=".72" stopColor={cloud.color} stopOpacity=".08" /><stop offset="1" stopColor={cloud.color} stopOpacity="0" /></radialGradient>)}</defs>
     {clouds.map((cloud) => {
       const active = activeWarId ? cloud.warIds.includes(activeWarId) : false;

@@ -1,0 +1,22 @@
+{
+  "baseline": "pre-v2.1.0 development baseline",
+  "totalBytes": 1512954,
+  "javaScriptGzipBytes": 447913,
+  "initialJavaScriptGzipBytes": 417374,
+  "largestAsyncChunkGzipBytes": 28576,
+  "largestAssetBytes": 554450,
+  "largestAsset": "out/_next/static/chunks/35awe5ikk-o8e.js",
+  "physicalVectorGzipBytes": 202086,
+  "fileCount": 27,
+  "javaScriptChunkCount": 14,
+  "externalRuntimeUrls": [],
+  "limits": {
+    "totalBytes": 3145728,
+    "javaScriptGzipBytes": 460800,
+    "largestAssetBytes": 921600,
+    "physicalVectorGzipBytes": 460800,
+    "initialJavaScriptGzipBytes": 460800,
+    "largestAsyncChunkGzipBytes": 307200
+  },
+  "failures": []
+}

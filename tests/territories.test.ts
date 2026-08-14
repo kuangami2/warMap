@@ -11,7 +11,7 @@ describe('historical territory snapshots', () => {
     expect(activeTerritories(territories, -220).map((item) => item.polityId)).toEqual(['qin']);
     expect(activeTerritories(territories, -209).map((item) => item.polityId)).toEqual(expect.arrayContaining(['qin', 'zhangchu']));
     expect(activeTerritories(territories, -206).map((item) => item.polityId)).toEqual(expect.arrayContaining(['han', 'western-chu']));
-    expect(activeTerritories(territories, -180).map((item) => item.polityId)).toEqual(expect.arrayContaining(['han', 'xiongnu', 'nanyue']));
+    expect(activeTerritories(territories, -200).map((item) => item.polityId)).toEqual(expect.arrayContaining(['han', 'xiongnu', 'nanyue']));
   });
 
   it('allows explicit gaps without inferring territory', () => {
@@ -27,14 +27,16 @@ describe('historical territory snapshots', () => {
     const base = territories[0];
     const invalid: TerritorySnapshot[] = [
       base,
-      { ...base, polityId: 'missing', startYear: -250, sources: [], geometry: { type: 'Polygon', coordinates: [[[70, 20], [80, 20], [80, 30]]] } },
+      { ...base, scenarioId: '', polityId: 'missing', startYear: -250, sources: [], control: 'invalid' as TerritorySnapshot['control'], geometry: { type: 'Polygon', coordinates: [[[70, 20], [80, 20], [80, 30]]] } },
     ];
     const errors = validateTerritories(invalid, polities);
     expect(errors).toEqual(expect.arrayContaining([
       `${base.id}: duplicated id`,
+      `${base.id}: missing scenario`,
       `${base.id}: unknown polity`,
       `${base.id}: invalid year range`,
       `${base.id}: missing source`,
+      `${base.id}: invalid control level`,
       `${base.id}: polygon ring needs at least four points`,
       `${base.id}: polygon ring is not closed`,
     ]));

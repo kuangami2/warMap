@@ -1,34 +1,70 @@
-import type { Confidence, Location, RouteSegment, Scale, Source, WarEvent, WarType } from '@/lib/types';
+import type { Confidence, EventKind, Location, RouteSegment, Scale, Source, WarEvent, WarType } from '@/lib/types';
+import { QIN_HAN_SCENARIO_ID } from './scenarios';
 
 type EventInput = {
   id: string; name: string; years: [number, number]; type: WarType; scale: Scale; summary: string;
   background: string; result: string; impact: string; sides: string[]; place: [string, string, number, number, Location['role']]; source: string;
-  confidence?: Confidence; estimate?: string; tags: string[];
+  confidence?: Confidence; estimate?: string; tags: string[]; kind?: EventKind; parentEventId?: string;
 };
 
-function inferPolityId(name: string): string | undefined {
-  if (name.includes('韩信') || name.includes('刘邦') || name.includes('汉军') || name.includes('汉廷') || name.includes('汉联盟')) return 'han';
-  if (name.includes('项羽') || name.includes('西楚') || name.includes('楚军')) return 'western-chu';
-  if (name.includes('陈胜') || name.includes('吴广') || name.includes('张楚') || name.includes('反秦')) return 'zhangchu';
-  if (name.includes('匈奴')) return 'xiongnu';
-  if (name.includes('南越')) return 'nanyue';
-  if (name.includes('秦')) return 'qin';
-  if (name === '韩' || name.includes('韩国')) return 'han-state';
-  if (name.includes('赵')) return 'zhao';
-  if (name.includes('魏')) return 'wei';
-  if (name.includes('燕')) return 'yan';
-  if (name.includes('齐')) return 'qi';
-  if (name.includes('楚')) return 'chu';
-  return undefined;
+function defaultKind(type: WarType): EventKind {
+  if (type === 'rebellion') return 'uprising';
+  if (type === 'campaign' || type === 'border') return 'campaign';
+  if (type === 'unification' || type === 'civil-war') return 'war';
+  return 'battle';
 }
+
+const polityIdsByEvent: Record<string, Array<string | undefined>> = {
+  'qin-conquest-han': ['qin', 'han-state'],
+  'qin-conquest-zhao': ['qin', 'zhao'],
+  'qin-conquest-wei': ['qin', 'wei'],
+  'qin-conquest-chu': ['qin', 'chu'],
+  'qin-conquest-yan': ['qin', 'yan'],
+  'qin-conquest-qi': ['qin', 'qi'],
+  'qin-xiongnu-campaign': ['qin', 'xiongnu'],
+  'qin-lingnan-campaign': ['qin', undefined],
+  'dazexiang-uprising': ['zhangchu', 'qin'],
+  'zhangchu-expansion': ['zhangchu', 'qin'],
+  'liu-bang-pei-uprising': ['han', 'qin'],
+  'xiang-liang-uprising': ['chu', 'qin'],
+  'julu-battle': ['western-chu', 'qin'],
+  'liu-bang-enter-guanzhong': ['han', 'qin'],
+  'qins-destruction': ['han', 'qin'],
+  'hongmen-feast': ['western-chu', 'han'],
+  'eighteen-kings': ['western-chu', undefined],
+  'liu-bang-hanzhong': ['han', 'western-chu'],
+  'three-qin-war': ['han', 'western-chu'],
+  'pengcheng-battle': ['western-chu', 'han'],
+  'han-conquest-wei': ['han', 'wei'],
+  'xingyang-chenggao': ['western-chu', 'han'],
+  'jingxing-battle': ['han', 'zhao'],
+  'han-conquest-qi': ['han', 'qi', 'western-chu'],
+  'wei-river-battle': ['han', 'western-chu'],
+  'gaixia-battle': ['han', 'western-chu'],
+  'xiang-yu-death': ['western-chu', 'han'],
+  'baideng-siege': ['han', 'xiongnu'],
+  'han-xin-arrest': ['han', 'han'],
+  'jing-ke-assassination': ['yan', 'qin'],
+  'qin-northern-defence': ['qin', undefined],
+  'chen-sheng-defeat': ['zhangchu', 'qin'],
+  'dingtao-battle': ['chu', 'qin'],
+  'zhang-han-surrender': ['western-chu', 'qin'],
+  'xiang-yu-enters-guanzhong': ['western-chu', 'han', 'qin'],
+  'han-conquest-dai': ['han', undefined],
+  'han-conquest-yan': ['han', 'yan'],
+  'xingyang-escape': ['han', 'western-chu'],
+  'honggou-treaty': ['han', 'western-chu'],
+};
 
 function event(input: EventInput): WarEvent {
   const [name, modernName, latitude, longitude, role] = input.place;
   const sources: Source[] = [{ title: input.source }];
+  const polityIds = polityIdsByEvent[input.id];
+  if (!polityIds) throw new Error(`Missing explicit polity mapping for ${input.id}`);
   return {
-    id: input.id, name: input.name, startYear: input.years[0], endYear: input.years[1], type: input.type, scale: input.scale,
+    id: input.id, scenarioId: QIN_HAN_SCENARIO_ID, name: input.name, startYear: input.years[0], endYear: input.years[1], type: input.type, kind: input.kind ?? defaultKind(input.type), parentEventId: input.parentEventId, scale: input.scale,
     confidence: input.confidence ?? 'high', summary: input.summary, background: input.background, result: input.result, impact: input.impact,
-    participants: input.sides.map((side, index) => ({ id: `${input.id}-${index}`, name: side, polityId: inferPolityId(side) })),
+    participants: input.sides.map((side, index) => ({ id: `${input.id}-${index}`, name: side, polityId: polityIds[index] })),
     locations: [{ id: `${input.id}-location`, name, modernName, latitude, longitude, role }],
     troopEstimate: input.estimate ? { display: input.estimate } : undefined, routes: routesByEvent[input.id], sources, tags: input.tags,
   };
@@ -98,8 +134,14 @@ export const wars: WarEvent[] = [
   event({ id: 'xiang-yu-death', name: '项羽乌江败亡', years: [-202, -202], type: 'civil-war', scale: 'A', summary: '项羽在垓下突围后于乌江一带败亡。', background: '垓下合围失败后，楚军已无法重建主力。', result: '项羽死亡，西楚势力瓦解。', impact: '刘邦得以完成对全国主要军事对手的压制。', sides: ['项羽余部', '汉军追击部队'], place: ['乌江', '今安徽和县乌江镇一带（说法有异）', 31.73, 118.37, 'battlefield'], source: '《史记·项羽本纪》', confidence: 'medium', tags: ['楚汉战争', '项羽'] }),
   event({ id: 'baideng-siege', name: '白登之围', years: [-200, -200], type: 'border', scale: 'A', summary: '刘邦北上作战时一度受困于白登，后得以脱险。', background: '汉初北方力量薄弱，与匈奴的关系迅速紧张。', result: '汉军脱困，未能建立稳定北进优势。', impact: '汉初对匈奴的政策趋于谨慎。', sides: ['汉军', '匈奴军'], place: ['白登', '今山西大同东北一带（地点有异说）', 40.12, 113.39, 'siege'], source: '《史记·高祖本纪》', confidence: 'medium', tags: ['汉初', '边疆', '匈奴'] }),
   event({ id: 'han-xin-arrest', name: '韩信被擒与改封', years: [-201, -201], type: 'civil-war', scale: 'B', summary: '汉廷以韩信可能反叛为由将其由楚王改封为淮阴侯。', background: '汉初开始重组异姓诸侯与功臣的权力关系。', result: '韩信失去楚王地位。', impact: '中央与异姓诸侯的紧张关系公开化。', sides: ['汉廷', '韩信集团'], place: ['陈县', '今河南淮阳一带', 33.73, 114.86, 'battlefield'], source: '《史记·淮阴侯列传》', confidence: 'medium', tags: ['汉初', '诸侯'] }),
-  event({ id: 'han-xin-execution', name: '韩信遇害', years: [-196, -196], type: 'civil-war', scale: 'B', summary: '韩信在长安被杀，异姓功臣集团受到进一步清理。', background: '陈豨事件后，汉廷对异姓诸侯和军事功臣更为警惕。', result: '韩信死亡。', impact: '汉初中央集权与异姓诸侯的矛盾继续升级。', sides: ['汉廷', '韩信集团'], place: ['长安', '今陕西西安一带', 34.26, 108.95, 'capital'], source: '《史记·淮阴侯列传》', confidence: 'medium', tags: ['汉初', '诸侯'] }),
-  event({ id: 'peng-yue-campaign', name: '彭越集团被清除', years: [-196, -196], type: 'civil-war', scale: 'B', summary: '梁王彭越被废杀，其势力被汉廷收束。', background: '汉初持续调整异姓诸侯的军事与政治空间。', result: '彭越集团瓦解。', impact: '中央对东方诸侯地区的控制加强。', sides: ['汉廷', '彭越集团'], place: ['梁地', '今河南东部、山东西部一带', 34.75, 115.80, 'region'], source: '《史记·魏豹彭越列传》', confidence: 'medium', tags: ['汉初', '诸侯'] }),
-  event({ id: 'ying-bu-rebellion', name: '英布之乱', years: [-196, -195], type: 'civil-war', scale: 'A', summary: '淮南王英布起兵反汉，刘邦亲征平乱。', background: '异姓诸侯接连受清理，英布与中央关系恶化。', result: '英布败亡，叛乱平定。', impact: '异姓诸侯体系进一步被改组。', sides: ['汉军', '英布军'], place: ['淮南', '今安徽中部一带', 32.60, 116.30, 'region'], source: '《史记·黥布列传》', tags: ['汉初', '诸侯', '叛乱'] }),
-  event({ id: 'nanyue-submission', name: '南越与汉初关系重建', years: [-196, -196], type: 'border', scale: 'C', summary: '汉廷与南越建立册封关系，边疆采取以外交和军事威慑并用的策略。', background: '岭南在秦末汉初形成相对独立的南越政权。', result: '南越接受汉廷册封。', impact: '汉初南方边疆暂时稳定。', sides: ['汉廷', '南越政权'], place: ['番禺', '今广东广州', 23.13, 113.26, 'capital'], source: '《史记·南越列传》', confidence: 'medium', tags: ['汉初', '边疆', '南越'] }),
+  event({ id: 'jing-ke-assassination', name: '荆轲刺秦', years: [-227, -227], type: 'unification', kind: 'political', scale: 'C', summary: '燕国使者荆轲入秦行刺失败，秦燕关系彻底破裂。', background: '燕国面临秦军东进压力，试图以非常手段延缓危局。', result: '刺杀失败，秦对燕军事压力加剧。', impact: '成为秦灭燕前的重要政治转折。', sides: ['燕国使团', '秦廷'], place: ['咸阳', '今陕西咸阳东北一带', 34.39, 108.71, 'capital'], source: '《史记·刺客列传》', confidence: 'medium', tags: ['统一', '燕国', '政治转折'] }),
+  event({ id: 'qin-northern-defence', name: '秦北方边防经营', years: [-215, -214], type: 'border', kind: 'campaign', scale: 'B', summary: '秦在河套及北方边地推进驻军、交通与防御工程。', background: '蒙恬北进后，秦需要把军事成果转化为长期边防能力。', result: '北方防御体系得到加强。', impact: '大规模征发也加重了帝国的人力与财政压力。', sides: ['秦廷', '北方边地势力'], place: ['上郡', '今陕西北部、内蒙古南部一带', 37.50, 109.50, 'region'], source: '《史记·蒙恬列传》', confidence: 'medium', tags: ['边疆', '北方', '边防'] }),
+  event({ id: 'chen-sheng-defeat', name: '陈胜败亡', years: [-208, -208], type: 'rebellion', kind: 'uprising', scale: 'B', summary: '张楚政权在秦军反击与内部离散中迅速瓦解，陈胜败亡。', background: '起义扩张速度很快，但组织、补给与各地力量之间的协调有限。', result: '陈胜集团失败。', impact: '反秦战争的主导力量转向项羽、刘邦等其他集团。', sides: ['张楚政权', '秦军'], place: ['下城父', '今安徽涡阳一带（地望有异说）', 33.50, 116.20, 'battlefield'], source: '《史记·陈涉世家》', confidence: 'medium', tags: ['秦末', '张楚', '起义'] }),
+  event({ id: 'dingtao-battle', name: '定陶之战', years: [-208, -208], type: 'rebellion', kind: 'battle', scale: 'A', summary: '秦将章邯击败项梁军，项梁战死。', background: '项梁在反秦诸军中势力上升，秦军集中兵力反击楚军。', result: '项梁军失利，项羽接过楚军主导权。', impact: '反秦战争的领导格局发生转折。', sides: ['楚军', '秦军'], place: ['定陶', '今山东定陶一带', 35.08, 115.57, 'battlefield'], source: '《史记·项羽本纪》', tags: ['秦末', '项梁', '项羽'] }),
+  event({ id: 'zhang-han-surrender', name: '章邯降楚', years: [-207, -207], type: 'rebellion', kind: 'political', scale: 'A', summary: '巨鹿之战后，秦将章邯率部向项羽投降。', background: '秦军主力受挫，朝廷内外已难以维持有效支援。', result: '秦军大部失去独立作战能力。', impact: '秦朝军事支柱崩解，关中局势急转直下。', sides: ['楚军', '章邯秦军'], place: ['洹水南岸', '今河北临漳、安阳一带（地点有异说）', 36.20, 114.60, 'battlefield'], source: '《史记·项羽本纪》', confidence: 'medium', tags: ['秦末', '巨鹿', '政权崩解'] }),
+  event({ id: 'xiang-yu-enters-guanzhong', name: '项羽入关与关中秩序重组', years: [-206, -206], type: 'civil-war', kind: 'political', scale: 'A', summary: '项羽率军入关，在秦都旧地重组诸侯秩序。', background: '刘邦先入关后，项羽仍拥有更强的军事威望与兵力。', result: '项羽掌握战后分配主导权。', impact: '关中归属和分封安排成为楚汉对立的直接起点。', sides: ['项羽军', '刘邦集团', '关中旧政权'], place: ['咸阳', '今陕西咸阳东北一带', 34.39, 108.71, 'capital'], source: '《史记·项羽本纪》', confidence: 'medium', tags: ['楚汉', '关中', '政权重组'] }),
+  event({ id: 'han-conquest-dai', name: '韩信平代', years: [-205, -205], type: 'campaign', kind: 'campaign', parentEventId: 'han-conquest-wei', scale: 'B', summary: '韩信北进击破代地势力，扩大汉军北方战略纵深。', background: '汉军取得魏地后，需要继续控制太行以西北的通道。', result: '代地归附汉军。', impact: '为随后赵地战役创造战略条件。', sides: ['汉军', '代王陈馀集团'], place: ['代地', '今山西北部、河北西北部一带', 39.00, 113.20, 'region'], source: '《史记·淮阴侯列传》', confidence: 'medium', tags: ['楚汉', '韩信', '北伐'] }),
+  event({ id: 'han-conquest-yan', name: '燕地归汉', years: [-204, -204], type: 'campaign', kind: 'political', parentEventId: 'jingxing-battle', scale: 'B', summary: '赵地战局逆转后，燕王遣使归附汉军。', background: '韩信北方作战的胜利改变了诸侯对楚汉前景的判断。', result: '燕地转向汉军。', impact: '汉军在北方获得更广泛的政治与战略支持。', sides: ['汉军', '燕国'], place: ['蓟城', '今北京城区西南一带', 39.90, 116.38, 'capital'], source: '《史记·淮阴侯列传》', confidence: 'medium', tags: ['楚汉', '韩信', '燕地'] }),
+  event({ id: 'xingyang-escape', name: '荥阳突围', years: [-204, -204], type: 'civil-war', kind: 'siege', parentEventId: 'xingyang-chenggao', scale: 'A', summary: '楚军围困荥阳，刘邦一度陷入危局后得以突围。', background: '荥阳是关中与中原之间的关键通道，楚汉双方反复争夺。', result: '汉军保存核心指挥力量并继续相持。', impact: '楚汉胜负未在中原战场立即决定。', sides: ['汉军', '楚军'], place: ['荥阳', '今河南荥阳', 34.79, 113.38, 'siege'], source: '《史记·高祖本纪》', confidence: 'medium', tags: ['楚汉', '荥阳', '相持'] }),
+  event({ id: 'honggou-treaty', name: '鸿沟议和', years: [-203, -203], type: 'civil-war', kind: 'diplomatic', scale: 'B', summary: '楚汉暂以鸿沟为界议和，双方随后又迅速恢复战争。', background: '长期相持消耗巨大，楚汉均试图争取喘息与重整机会。', result: '和议未能稳定结束冲突。', impact: '汉军随后发动追击，战争进入最后阶段。', sides: ['汉军', '楚军'], place: ['鸿沟', '今河南荥阳、开封之间一带（地望有异说）', 34.70, 113.95, 'region'], source: '《史记·项羽本纪》', confidence: 'medium', tags: ['楚汉', '外交', '决战前夕'] }),
 ];

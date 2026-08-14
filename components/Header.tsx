@@ -1,3 +1,5 @@
-export function Header({ eraName }: { eraName: string }) {
-  return <header className="flex items-center justify-between border-b border-stone-700/70 px-5 py-4 md:px-8"><div><p className="eyebrow">前230年 — 前180年</p><h1>秦统一至汉初 · 历史战争地图</h1></div><div className="hidden rounded-full border border-amber-400/30 bg-amber-300/10 px-3 py-1 text-sm text-amber-200 sm:block">{eraName}</div></header>;
+import type { TimelineScenario } from '@/lib/types';
+
+export function Header({ scenario, eraName, scenarios, onScenario, loading = false }: { scenario: TimelineScenario; eraName: string; scenarios: TimelineScenario[]; onScenario: (id: string) => void; loading?: boolean }) {
+  return <header className="site-header border-b border-stone-700/70 px-5 py-4 md:px-8"><div><p className="eyebrow">{scenario.startYear < 0 ? `前${Math.abs(scenario.startYear)}年` : `${scenario.startYear}年`} — {scenario.endYear}年</p><h1>{scenario.name} · 历史战争地图</h1></div><div className="header-actions"><label className="scenario-switcher"><span className="sr-only">选择历史专题</span><select value={scenario.id} onChange={(event) => onScenario(event.target.value)} aria-label="选择历史专题" disabled={loading} aria-busy={loading}>{scenarios.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>{loading && <span className="scenario-loading" role="status">正在切换专题</span>}<div className="hidden rounded-full border border-amber-400/30 bg-amber-300/10 px-3 py-1 text-sm text-amber-200 sm:block">{eraName}</div></div></header>;
 }
