@@ -110,6 +110,30 @@ export type ResearchRegion = { id: string; scenarioId: string; name: string; des
 export type CoverageWindow = { id: string; scenarioId: string; startYear: number; endYear: number; status: 'curated' | 'not-curated'; note: string };
 export type ScenarioManifest = { id: string; contentVersion: string; editorialStatus: 'curated'; coverageNote: string };
 
+export type LandmarkImageClassification = 'historical-artwork' | 'later-artwork' | 'modern-reconstruction';
+export type LandmarkImage = {
+  id: string;
+  scenarioId: string;
+  eventId: string;
+  displayYear: number;
+  editorialPriority: number;
+  path: string;
+  width: number;
+  height: number;
+  focalPoint: { x: number; y: number };
+  alt: string;
+  classification: LandmarkImageClassification;
+  creator: string;
+  date: string;
+  attribution: string;
+  license: string;
+  sourceId: string;
+  quotation: string;
+  quotationCitation: string;
+  applicability: string;
+  uncertaintyNote?: string;
+};
+
 /** Reserved for an explicitly licensed future package; no geometry ships in 2.x. */
 export type AdministrativeGeographyDataset = {
   id: string;
@@ -146,4 +170,5 @@ export type ScenarioData = {
   regions: ResearchRegion[];
   coverage: CoverageWindow[];
   sourceCatalog: SourceCatalogEntry[];
+  landmarkImages: LandmarkImage[];
 };

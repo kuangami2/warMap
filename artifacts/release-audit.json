@@ -1,5 +1,5 @@
 {
-  "version": "2.3.0",
+  "version": "2.6.0",
   "packages": [
     "qin-han",
     "han-three-kingdoms"
@@ -14,6 +14,6 @@
   },
   "modernReferenceGzipBytes": 2728,
   "historicalGis": "disabled-awaiting-license",
-  "staticIndexBytes": 72976,
+  "staticIndexBytes": 73229,
   "status": "passed"
 }

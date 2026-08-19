@@ -1,4 +1,4 @@
-import type { Confidence, HistoricalPlace, Polity, ScenarioData, Source, TerritorySnapshot, TimelineScenario, WarEvent } from './types';
+import type { Confidence, HistoricalPlace, LandmarkImage, Polity, ScenarioData, Source, TerritorySnapshot, TimelineScenario, WarEvent } from './types';
 import { END_YEAR, START_YEAR } from './timeline';
 
 const confidenceLevels: Confidence[] = ['high', 'medium', 'low'];
@@ -98,12 +98,34 @@ export function validateHistoricalPlaces(places: HistoricalPlace[], scenario?: T
   return errors;
 }
 
+export function validateLandmarkImages(images: LandmarkImage[], data: Pick<ScenarioData, 'scenario' | 'wars' | 'sourceCatalog'>): string[] {
+  const errors: string[] = [];
+  const ids = new Set<string>();
+  const eventIds = new Set(data.wars.map((war) => war.id));
+  const sourceIds = new Set(data.sourceCatalog.map((source) => source.id));
+  for (const image of images) {
+    if (ids.has(image.id)) errors.push(`${image.id}: duplicated landmark image id`);
+    ids.add(image.id);
+    if (image.scenarioId !== data.scenario.id) errors.push(`${image.id}: cross-scenario landmark image`);
+    if (!eventIds.has(image.eventId)) errors.push(`${image.id}: unknown landmark event`);
+    if (!sourceIds.has(image.sourceId)) errors.push(`${image.id}: unresolved landmark source id`);
+    if (!image.path.startsWith('./') && !image.path.startsWith('/')) errors.push(`${image.id}: landmark path must be local`);
+    if (image.width < 320 || image.height < 160) errors.push(`${image.id}: landmark dimensions too small`);
+    if (image.focalPoint.x < 0 || image.focalPoint.x > 100 || image.focalPoint.y < 0 || image.focalPoint.y > 100) errors.push(`${image.id}: invalid focal point`);
+    if (!image.alt.trim() || !image.creator.trim() || !image.license.trim() || !image.attribution.trim()) errors.push(`${image.id}: missing image attribution metadata`);
+    if (!image.quotation.trim() || !image.quotationCitation.trim() || !image.applicability.trim()) errors.push(`${image.id}: incomplete landmark quotation`);
+    if (image.classification === 'modern-reconstruction' && !image.uncertaintyNote?.includes('现代视觉重构')) errors.push(`${image.id}: modern reconstruction missing disclaimer`);
+  }
+  return errors;
+}
+
 /** Validates the packaged boundary used by the UI and release audit. */
 export function validateScenarioPackage(data: ScenarioData): string[] {
   const errors = [
     ...validateWars(data.wars, data.polities, data.scenario),
     ...validateTerritories(data.territories, data.polities, data.scenario),
     ...validateHistoricalPlaces(data.places, data.scenario),
+    ...validateLandmarkImages(data.landmarkImages, data),
   ];
   if (data.manifest.id !== data.scenario.id) errors.push(`${data.scenario.id}: manifest id mismatch`);
   if (!data.manifest.contentVersion) errors.push(`${data.scenario.id}: missing content version`);

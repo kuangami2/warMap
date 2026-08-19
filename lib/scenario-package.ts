@@ -1,4 +1,4 @@
-import type { CoverageWindow, Era, HistoricalPlace, Polity, ResearchRegion, ScenarioData, ScenarioManifest, Source, SourceCatalogEntry, TerritorySnapshot, TimelineScenario, WarEvent } from './types';
+import type { CoverageWindow, Era, HistoricalPlace, LandmarkImage, Polity, ResearchRegion, ScenarioData, ScenarioManifest, Source, SourceCatalogEntry, TerritorySnapshot, TimelineScenario, WarEvent } from './types';
 
 function hash(value: string) {
   let result = 2166136261;
@@ -41,6 +41,7 @@ export type ScenarioPackageParts = {
   narrativeEventIds: readonly string[];
   regions: ResearchRegion[];
   coverage: CoverageWindow[];
+  landmarkImages?: LandmarkImage[];
 };
 
 export function assembleScenarioPackage(parts: ScenarioPackageParts): ScenarioData {
@@ -53,5 +54,6 @@ export function assembleScenarioPackage(parts: ScenarioPackageParts): ScenarioDa
     territories,
     places,
     sourceCatalog: normalizeCatalog([...wars.flatMap((war) => war.sources), ...territories.flatMap((territory) => territory.sources), ...places.flatMap((place) => place.sources)]),
+    landmarkImages: parts.landmarkImages ?? [],
   };
 }

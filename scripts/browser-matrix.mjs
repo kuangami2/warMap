@@ -211,6 +211,18 @@ for (const profile of selectedProfiles) {
     ensure((await page.locator('.narrative-map-heading h2').textContent()) === pausedStoryTitle, `${profile.name}: resuming playback restarted the story chapter`);
     ensure((await page.locator('.timeline-range').first().inputValue()) === pausedStoryYear, `${profile.name}: resuming playback reset the story year`);
     await mobileTimeline.getByRole('button', { name: '暂停播放' }).click();
+    const mobileRange = mobileTimeline.locator('.timeline-range');
+    await mobileRange.evaluate((element) => {
+      const input = element;
+      input.value = '-201';
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+    await page.waitForTimeout(80);
+    ensure(!(page.url().includes('story=')), `${profile.name}: manual mobile timeline movement retained stale story state`);
+    await mobileTimeline.getByRole('button', { name: '播放历史' }).click();
+    ensure((await page.locator('.narrative-map-heading h2').textContent()) === '白登之围', `${profile.name}: mobile playback did not resume at the next chapter after a timeline gap`);
+    await mobileTimeline.getByRole('button', { name: '暂停播放' }).click();
     const firstMobileEvent = page.locator('.event-card').first();
     await firstMobileEvent.scrollIntoViewIfNeeded();
     await firstMobileEvent.click();
@@ -245,6 +257,18 @@ for (const profile of selectedProfiles) {
     ensure((await page.locator('.timeline-range').first().inputValue()) === pausedStoryYear, `${profile.name}: desktop playback reset the paused story year`);
     await page.waitForFunction(() => window.location.search.includes('story='), undefined, { timeout: 5_000 });
     ensure(page.url().includes('story='), `${profile.name}: story state was not written to the shareable URL`);
+    await desktopPlay.click();
+    const draggedDesktopRange = page.locator('.desktop-timeline .timeline-range');
+    await draggedDesktopRange.evaluate((element) => {
+      const input = element;
+      input.value = '-205';
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+    await page.waitForTimeout(80);
+    ensure(!(page.url().includes('story=')), `${profile.name}: manual desktop timeline movement retained stale story state`);
+    await desktopPlay.click();
+    ensure((await page.locator('.narrative-map-heading h2').textContent()) === '彭城之战', `${profile.name}: desktop playback did not resume from the dragged timeline position`);
     const initialNarrativeTitle = await page.locator('.narrative-map-heading h2').textContent();
     await page.locator('.narrative-map-controls').getByRole('button', { name: '下一节' }).click();
     ensure((await page.locator('.narrative-map-heading h2').textContent()) !== initialNarrativeTitle, `${profile.name}: next narrative step did not change the story`);

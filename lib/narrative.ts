@@ -52,6 +52,6 @@ export function previousNarrativeMoment(moments: NarrativeMoment[], id?: string)
 
 export function narrativeMomentForYear(moments: NarrativeMoment[], year: number) {
   return moments.find((moment) => year >= moment.startYear && year <= moment.endYear)
-    ?? moments[0];
+    ?? moments.find((moment) => moment.startYear >= year);
 }
 import { NARRATIVE_EVENT_IDS } from '@/data/narratives';

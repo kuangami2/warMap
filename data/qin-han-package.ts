@@ -7,10 +7,11 @@ import { QIN_HAN_SCENARIO_ID, scenarios } from './scenarios';
 import { territories } from './territories';
 import { wars } from './wars';
 import { assembleScenarioPackage } from '@/lib/scenario-package';
+import { landmarkImages } from './landmark-images';
 
 export function createQinHanPackage() {
   return assembleScenarioPackage({
-    manifest: { id: QIN_HAN_SCENARIO_ID, contentVersion: '2.3.0', editorialStatus: 'curated', coverageNote: '秦统一至汉初主线已审校；本专题不把空白时间窗口解释为没有历史活动。' },
+    manifest: { id: QIN_HAN_SCENARIO_ID, contentVersion: '2.6.0', editorialStatus: 'curated', coverageNote: '秦统一至汉初主线已审校；本专题不把空白时间窗口解释为没有历史活动。' },
     scenario: scenarios.find((scenario) => scenario.id === QIN_HAN_SCENARIO_ID)!,
     eras: eras.filter((era) => era.scenarioId === QIN_HAN_SCENARIO_ID),
     polities: polities.filter((polity) => polity.scenarioId === QIN_HAN_SCENARIO_ID),
@@ -20,5 +21,6 @@ export function createQinHanPackage() {
     narrativeEventIds: NARRATIVE_EVENT_IDS,
     regions: researchRegions.filter((region) => region.scenarioId === QIN_HAN_SCENARIO_ID),
     coverage: coverageWindows.filter((window) => window.scenarioId === QIN_HAN_SCENARIO_ID),
+    landmarkImages: landmarkImages.filter((image) => image.scenarioId === QIN_HAN_SCENARIO_ID),
   });
 }

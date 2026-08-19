@@ -12,6 +12,8 @@ const files = {
   packageTypes: await readFile(path.resolve('lib/scenario-package.ts'), 'utf8'),
   research: await readFile(path.resolve('data/research.ts'), 'utf8'),
   modern: await readFile(path.resolve('data/modernPlaces.ts'), 'utf8'),
+  landmarks: await readFile(path.resolve('data/landmark-images.ts'), 'utf8'),
+  researchDesk: await readFile(path.resolve('lib/research-collection.ts'), 'utf8'),
   gisGuide: await readFile(path.resolve('HISTORICAL_GIS_AUTHORIZATION_GUIDE.md'), 'utf8'),
 };
 const staticFiles = ['README.md', 'DATA_CONTRACT.md', 'DEPLOYMENT.md', 'PROJECT_MANUAL.md'];
@@ -25,7 +27,7 @@ const qinEvents = (files.qin.match(/id: '/g) ?? []).length;
 const territories = (files.han.match(/territory\('/g) ?? []).length;
 const narrativeBlock = files.han.match(/export const HAN_THREE_KINGDOMS_NARRATIVE_EVENT_IDS = \[([\s\S]*?)\] as const;/)?.[1] ?? '';
 const narratives = (narrativeBlock.match(/'tk-[^']+'/g) ?? []).length;
-ensure(packageJson.version === '2.3.0', `expected package version 2.3.0, got ${packageJson.version}`);
+ensure(/^2\.\d+\.\d+$/.test(packageJson.version), `expected a 2.x semantic version, got ${packageJson.version}`);
 ensure(files.packages.includes('createQinHanPackage') && files.packages.includes('createHanThreeKingdomsPackage'), 'scenario registry must contain both packages');
 ensure(files.packageTypes.includes('sourceCatalog') && files.packageTypes.includes('assembleScenarioPackage'), 'content package must normalize a source catalog');
 ensure(files.research.includes('coverageWindows') && files.research.includes('researchRegions'), 'research regions and coverage declarations are required');
@@ -38,6 +40,9 @@ ensure(narratives >= 18, `expected >=18 Three Kingdoms narrative references, got
 ensure(files.modern.includes("license: 'Public Domain'"), 'modern-reference layer must retain its public-domain license');
 ensure(files.modern.includes('不代表任何时期行政边界'), 'modern-reference layer must disclaim administrative-boundary meaning');
 ensure(files.gisGuide.includes('再分发'), 'historical GIS guide must retain redistribution requirements');
+ensure(files.landmarks.includes('license:') && files.landmarks.includes('sourceId:') && files.landmarks.includes('现代视觉重构'), 'landmark imagery must retain license, source and reconstruction disclaimer');
+ensure(files.landmarks.match(/path: local\('/g)?.length >= 8, 'landmark imagery must include the curated local batch');
+ensure(files.researchDesk.includes('collectionToMarkdown') && files.researchDesk.includes('collectionToJson') && files.researchDesk.includes('sanitizeResearchCollection'), 'research evidence desk must provide sanitized Markdown/JSON exports');
 for (const document of documents) ensure(document.content.includes('不') && document.content.includes('行政'), `${document.file} must record administrative-boundary limitations`);
 ensure(outputSize > 0, 'static export index.html is missing or empty; run npm run build:static first');
 const report = { version: packageJson.version, packages: ['qin-han', 'han-three-kingdoms'], counts: { qinEvents, hanEvents, threeKingdomsEvents, hanPlaces, territories, threeKingdomsNarrativeReferences: narratives }, modernReferenceGzipBytes: gzipSync(files.modern).byteLength, historicalGis: 'disabled-awaiting-license', staticIndexBytes: outputSize, status: 'passed' };

@@ -8,10 +8,11 @@ describe('static scenario packages', () => {
     for (const id of ['qin-han', 'han-three-kingdoms']) {
       const data = getScenarioData(id);
       expect(data.manifest.id).toBe(id);
-      expect(data.manifest.contentVersion).toBe('2.3.0');
+      expect(data.manifest.contentVersion).toBe('2.6.0');
       expect(data.regions.length).toBeGreaterThan(0);
       expect(data.coverage.length).toBeGreaterThan(0);
       expect(data.sourceCatalog.length).toBeGreaterThan(0);
+      expect(data.landmarkImages.every((image) => image.sourceId && image.license && image.quotationCitation)).toBe(true);
       expect(data.wars.flatMap((war) => war.sources).every((source) => source.id && source.kind)).toBe(true);
       expect(validateScenarioPackage(data)).toEqual([]);
     }
@@ -35,6 +36,16 @@ describe('static scenario packages', () => {
     expect(validateScenarioPackage(broken)).toEqual(expect.arrayContaining([
       'han-three-kingdoms: missing coverage declaration',
       `${han.wars[0].id}: unresolved source id`,
+    ]));
+  });
+
+  it('blocks cross-scenario and undocumented landmark imagery', () => {
+    const han = getScenarioData('han-three-kingdoms');
+    const broken = { ...han, landmarkImages: [{ ...han.landmarkImages[0], scenarioId: 'qin-han', sourceId: 'missing', uncertaintyNote: undefined }] };
+    expect(validateScenarioPackage(broken)).toEqual(expect.arrayContaining([
+      `${han.landmarkImages[0].id}: cross-scenario landmark image`,
+      `${han.landmarkImages[0].id}: unresolved landmark source id`,
+      `${han.landmarkImages[0].id}: modern reconstruction missing disclaimer`,
     ]));
   });
 });

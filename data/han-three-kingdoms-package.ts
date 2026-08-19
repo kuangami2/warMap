@@ -3,6 +3,7 @@ import { coverageWindows, researchRegions } from './research';
 import { HAN_THREE_KINGDOMS_SCENARIO_ID, scenarios } from './scenarios';
 import { assembleScenarioPackage } from '@/lib/scenario-package';
 import type { HistoricalPlace, WarEvent } from '@/lib/types';
+import { landmarkImages } from './landmark-images';
 
 const researchNotes: Record<string, string> = {
   'tk-red-cliffs': '赤壁古战场位置存在多种讨论；本条仅以长江中游的概括参考点和叙事路线说明战局。',
@@ -41,7 +42,7 @@ const routeReferencePlaces: HistoricalPlace[] = [
 
 export function createHanThreeKingdomsPackage() {
   return assembleScenarioPackage({
-    manifest: { id: HAN_THREE_KINGDOMS_SCENARIO_ID, contentVersion: '2.3.0', editorialStatus: 'curated', coverageNote: '两汉至三国主线已审校；研究区域用于检索和叙事分组，不表示任何行政边界。' },
+    manifest: { id: HAN_THREE_KINGDOMS_SCENARIO_ID, contentVersion: '2.6.0', editorialStatus: 'curated', coverageNote: '两汉至三国主线已审校；研究区域用于检索和叙事分组，不表示任何行政边界。' },
     scenario: scenarios.find((scenario) => scenario.id === HAN_THREE_KINGDOMS_SCENARIO_ID)!,
     eras: hanThreeKingdomsEras,
     polities: hanThreeKingdomsPolities,
@@ -51,5 +52,6 @@ export function createHanThreeKingdomsPackage() {
     narrativeEventIds: HAN_THREE_KINGDOMS_NARRATIVE_EVENT_IDS,
     regions: researchRegions.filter((region) => region.scenarioId === HAN_THREE_KINGDOMS_SCENARIO_ID),
     coverage: coverageWindows.filter((window) => window.scenarioId === HAN_THREE_KINGDOMS_SCENARIO_ID),
+    landmarkImages: landmarkImages.filter((image) => image.scenarioId === HAN_THREE_KINGDOMS_SCENARIO_ID),
   });
 }

@@ -25,4 +25,11 @@ describe('war narrative sequence', () => {
     expect(narrativeMomentForYear(moments, -205)?.id).toBe('pengcheng-battle');
     expect(narrativeMomentById(moments, 'not-a-story')).toBeUndefined();
   });
+
+  it('resumes from an exact event year or the next chapter without rewinding', () => {
+    expect(narrativeMomentForYear(moments, -207)?.id).toBe('julu-battle');
+    expect(narrativeMomentForYear(moments, -201)?.id).toBe('baideng-siege');
+    expect(narrativeMomentForYear(moments, -231)?.id).toBe('qin-conquest-han');
+    expect(narrativeMomentForYear(moments, -199)).toBeUndefined();
+  });
 });
