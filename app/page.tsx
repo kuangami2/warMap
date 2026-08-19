@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Header } from '@/components/Header';
+import { LandmarkBackdrop } from '@/components/LandmarkBackdrop';
 import { HistoricalBreakpointNotice } from '@/components/HistoricalBreakpointNotice';
 import { HistoricalMap, type MapLayers } from '@/components/HistoricalMap';
 import { MapExplorer } from '@/components/MapExplorer';
@@ -214,13 +215,14 @@ export default function Home() {
       <HistoricalBreakpointNotice breakpoint={historicalBreakpoint} />
       <MobileTimeline {...timelineProps} />
       <MapExplorer data={data} scenarios={scenarios} filters={explorerFilters} onFiltersChange={(next) => setExplorerFilters(sanitizeExplorerFilters(next, data))} onScenario={changeScenario} onPlace={focusPlace} onWar={focusWar} onShare={shareMap} />
-      <EvidenceDesk data={data} />
+      <LandmarkBackdrop images={data.landmarkImages} events={wars} year={currentYear} selectedEventId={selectedWar?.id} enabled={layers.imagery} />
       <div className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1fr)_400px] 2xl:grid-cols-[minmax(0,1fr)_420px]">
-        <HistoricalMap wars={visibleWars} places={places} currentYear={currentYear} landmarkImages={data.landmarkImages} viewport={mapViewport} focusTarget={focusTarget} territories={visibleTerritories} polities={polities} selectedWar={selectedWar} hoveredWar={hoveredWar} onSelect={(war) => { exitNarrative(); setSelectedWar(war); }} onHover={setHoveredWar} layers={layers} animations={animations} narrativeMode={Boolean(narrativeMoment)} onLayers={setLayers} onAnimations={setAnimations} onViewportChange={setMapViewport} />
+        <HistoricalMap wars={visibleWars} places={places} currentYear={currentYear} viewport={mapViewport} focusTarget={focusTarget} territories={visibleTerritories} polities={polities} selectedWar={selectedWar} hoveredWar={hoveredWar} onSelect={(war) => { exitNarrative(); setSelectedWar(war); }} onHover={setHoveredWar} layers={layers} animations={animations} narrativeMode={Boolean(narrativeMoment)} onLayers={setLayers} onAnimations={setAnimations} onViewportChange={setMapViewport} />
         <div className="side-column"><NarrativeMapPanel moment={narrativeMoment} war={narrativeMoment ? wars.find((war) => war.id === narrativeMoment.eventId) : undefined} scenarioName={scenario.name} total={narrativeMoments.length} playbackStatus={playback.status} onPrevious={() => { const previous = previousNarrativeMoment(narrativeMoments, narrativeMomentId); if (previous) showNarrativeMoment(previous.id, false); }} onNext={() => { const next = nextNarrativeMoment(narrativeMoments, narrativeMomentId); if (next) showNarrativeMoment(next.id, false); }} onExit={exitNarrative} /><StatsPanel wars={visibleWars} territoryCount={visibleTerritories.length} selectedWar={selectedWar} context={timelineContext} onSelect={(war) => { exitNarrative(); setSelectedWar(war); }} onHover={setHoveredWar} /><WarDetailDrawer war={narrativeMoment ? undefined : selectedWar} onClose={closeWarDetails} /></div>
       </div>
       <details className="data-note"><summary>关于地图、史料与不确定性</summary><div><p>自然地理底图来自本地裁切的 Natural Earth 1:10m 公共领域数据，包含现代海岸、陆地、湖泊与河流，仅作地理定位参考，不复原任何时期的行政边界。势力图层区分核心控制、主要影响、争夺和活动范围；透明度、虚线及柔化边缘均表示不确定性，不代表精确固定国界。</p><p>“古地名”图层显示经史料/图集核对的郡国、县治、城邑和关隘参考点，按当前专题、年代与缩放级别筛选；它不绘制、也不暗示精确行政辖区边界。每个点均保留古今对照、来源、可信度和异说说明。“今地名”图层来自 Natural Earth 1:50m Populated Places 公共领域数据，仅帮助现代地理定位，不是历史行政数据。</p><p>历史行政区面授权闸门目前关闭：已核对的 CHGIS 许可禁止再分发，且尚无其他可公开再分发、可审校的两汉三国边界包。因此 2.0 定位为专业自然地理、历史地点、势力范围与战争叙事地图，不声称精确历史行政区地图。</p><p>地图资产来源：{mapFeatureSources.map((source) => `${source.title} v${source.version}（${source.license}；${source.usage}）`).join('；')}。事件年份、古地望、兵力与路线可能存在史学争议；页面使用可信度、文字说明和来源字段表达这些限制。</p></div></details>
     </div>
     <Timeline {...timelineProps} />
+    <div className="mx-auto max-w-[1600px] px-4 pb-6 md:px-7"><EvidenceDesk data={data} /></div>
   </main>;
 }

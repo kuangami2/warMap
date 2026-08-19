@@ -1,5 +1,5 @@
 {
-  "version": "2.6.0",
+  "version": "2.6.1",
   "packages": [
     "qin-han",
     "han-three-kingdoms"
@@ -10,10 +10,67 @@
     "threeKingdomsEvents": 60,
     "hanPlaces": 59,
     "territories": 35,
-    "threeKingdomsNarrativeReferences": 23
+    "threeKingdomsNarrativeReferences": 23,
+    "landmarkEvents": 15,
+    "landmarkFiles": 13
   },
+  "landmarkBytes": 884434,
+  "landmarkAssets": [
+    {
+      "file": "julu-battle.webp",
+      "size": 27516
+    },
+    {
+      "file": "chu-han-contention.webp",
+      "size": 60532
+    },
+    {
+      "file": "kunyang-uprisings.webp",
+      "size": 85518
+    },
+    {
+      "file": "yellow-turban-rebellion.webp",
+      "size": 72632
+    },
+    {
+      "file": "guandu-battle.webp",
+      "size": 25002
+    },
+    {
+      "file": "red-cliffs.webp",
+      "size": 69532
+    },
+    {
+      "file": "hanzhong.webp",
+      "size": 122276
+    },
+    {
+      "file": "yiling-battle.webp",
+      "size": 125200
+    },
+    {
+      "file": "jieting-art.webp",
+      "size": 55814
+    },
+    {
+      "file": "wuzhang-art.webp",
+      "size": 46620
+    },
+    {
+      "file": "gaoping-art.webp",
+      "size": 136878
+    },
+    {
+      "file": "wei-conquers-shu.webp",
+      "size": 26658
+    },
+    {
+      "file": "jin-conquers-wu.webp",
+      "size": 30256
+    }
+  ],
   "modernReferenceGzipBytes": 2728,
   "historicalGis": "disabled-awaiting-license",
-  "staticIndexBytes": 73229,
+  "staticIndexBytes": 73344,
   "status": "passed"
 }

@@ -110,7 +110,7 @@ export type ResearchRegion = { id: string; scenarioId: string; name: string; des
 export type CoverageWindow = { id: string; scenarioId: string; startYear: number; endYear: number; status: 'curated' | 'not-curated'; note: string };
 export type ScenarioManifest = { id: string; contentVersion: string; editorialStatus: 'curated'; coverageNote: string };
 
-export type LandmarkImageClassification = 'historical-artwork' | 'later-artwork' | 'modern-reconstruction';
+export type LandmarkImageClassification = 'historical-artwork' | 'later-artwork' | 'modern-reconstruction' | 'battle-map' | 'artifact-photo';
 export type LandmarkImage = {
   id: string;
   scenarioId: string;
@@ -127,6 +127,9 @@ export type LandmarkImage = {
   date: string;
   attribution: string;
   license: string;
+  sourcePageUrl: string;
+  originalFileUrl: string;
+  licenseUrl?: string;
   sourceId: string;
   quotation: string;
   quotationCitation: string;

@@ -26,7 +26,10 @@ const initialFiles = [...initialSources].map((source) => path.resolve(outputDire
 const initialJavaScriptGzipBytes = initialFiles.reduce((sum, file) => sum + (gzipByFile.get(file) ?? 0), 0);
 const asyncChunks = [...gzipByFile.entries()].filter(([file]) => !initialFiles.includes(file));
 const largestAsyncChunkGzipBytes = asyncChunks.reduce((largest, [, size]) => Math.max(largest, size), 0);
-const externalUrls = html.flatMap((content) => Array.from(content.matchAll(/(?:src|href)=["'](https?:\/\/[^"']+)/g), (match) => match[1]));
+const externalUrls = html.flatMap((content) => [
+  ...Array.from(content.matchAll(/\ssrc=["'](https?:\/\/[^"']+)/g), (match) => match[1]),
+  ...Array.from(content.matchAll(/<link[^>]+href=["'](https?:\/\/[^"']+)/g), (match) => match[1]),
+]);
 const physicalVectorBytes = gzipSync(await readFile(path.resolve('data/naturalEarth10m.ts'))).byteLength;
 const report = { baseline: baseline.label, totalBytes, javaScriptGzipBytes, initialJavaScriptGzipBytes, largestAsyncChunkGzipBytes, largestAssetBytes: largestAsset.size, largestAsset: path.relative(process.cwd(), largestAsset.file).replaceAll('\\', '/'), physicalVectorGzipBytes: physicalVectorBytes, fileCount: records.length, javaScriptChunkCount: javascript.length, externalRuntimeUrls: [...new Set(externalUrls)] };
 

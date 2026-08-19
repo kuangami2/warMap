@@ -121,6 +121,16 @@ for (const profile of selectedProfiles) {
   await jingzhouFilter.click();
   await page.keyboard.press('Escape');
   const hanRange = page.locator('.timeline-range').first();
+  await hanRange.evaluate((element) => { const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set; setter?.call(element, '208'); element.dispatchEvent(new Event('input', { bubbles: true })); });
+  await page.waitForTimeout(800);
+  const landmarkBanner = page.locator('.landmark-banner');
+  const landmarkImage = landmarkBanner.locator('img').last();
+  ensure((await landmarkBanner.getAttribute('data-landmark-id')) === 'landmark-red-cliffs', `${profile.name}: year 208 did not show the Red Cliffs landmark banner`);
+  ensure(await landmarkImage.evaluate((image) => image.complete && image.naturalWidth > 0 && image.naturalHeight > 0 && Number(getComputedStyle(image).opacity) > .75), `${profile.name}: landmark raster is not visibly loaded`);
+  const bannerBox = await landmarkBanner.boundingBox(); const mapAfterBannerBox = await page.locator('.map-frame').boundingBox();
+  ensure(bannerBox && mapAfterBannerBox && mapAfterBannerBox.y >= bannerBox.y + bannerBox.height, `${profile.name}: landmark banner overlaps the map`);
+  const mediaBox = await landmarkBanner.locator('.landmark-banner-media').boundingBox(); const copyBox = await landmarkBanner.locator('.landmark-banner-copy').boundingBox();
+  ensure(mediaBox && copyBox && (profile.mobile ? copyBox.y >= mediaBox.y + mediaBox.height - 1 : copyBox.x >= mediaBox.x + mediaBox.width - 1), `${profile.name}: landmark banner layout does not match the viewport`);
   for (const checkpoint of [184, 208, 220, 229, 263, 265, 280]) {
     await hanRange.evaluate((element, year) => {
       const valueSetter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set;
@@ -135,6 +145,16 @@ for (const profile of selectedProfiles) {
   await page.waitForFunction(() => window.location.search.includes('scenario=qin-han'), undefined, { timeout: 5_000 });
   ensure((await page.locator('.timeline-range').first().inputValue()) === '-230', `${profile.name}: switching back did not restore Qin-Han start year`);
   ensure(await page.locator('.map-region-list').count() === 0, `${profile.name}: generic region shortcuts should not be shown`);
+  const evidenceToggle = page.getByRole('button', { name: /^来源证据台/ });
+  ensure(await evidenceToggle.evaluate((button) => Boolean(button.compareDocumentPosition(document.querySelector('.desktop-timeline')) & Node.DOCUMENT_POSITION_PRECEDING)), `${profile.name}: evidence desk is not after the desktop timeline in DOM order`);
+  await evidenceToggle.scrollIntoViewIfNeeded(); await evidenceToggle.click();
+  ensure(await page.getByRole('textbox', { name: '搜索来源' }).evaluate((input) => input === document.activeElement), `${profile.name}: opening evidence desk did not focus search`);
+  await page.keyboard.press('Escape');
+  ensure(!(await page.locator('#evidence-desk-panel').isVisible()), `${profile.name}: Escape did not close evidence desk`);
+  await page.waitForFunction(() => document.activeElement?.classList.contains('evidence-desk-toggle'), undefined, { timeout: 2_000 });
+  ensure(await evidenceToggle.evaluate((button) => button === document.activeElement), `${profile.name}: evidence desk did not restore trigger focus`);
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await page.waitForTimeout(120);
 
   if (profile.mobile) {
     const mobileTimeline = page.locator('.mobile-timeline-shell');
@@ -212,13 +232,8 @@ for (const profile of selectedProfiles) {
     ensure((await page.locator('.timeline-range').first().inputValue()) === pausedStoryYear, `${profile.name}: resuming playback reset the story year`);
     await mobileTimeline.getByRole('button', { name: '暂停播放' }).click();
     const mobileRange = mobileTimeline.locator('.timeline-range');
-    await mobileRange.evaluate((element) => {
-      const input = element;
-      input.value = '-201';
-      input.dispatchEvent(new Event('input', { bubbles: true }));
-      input.dispatchEvent(new Event('change', { bubbles: true }));
-    });
-    await page.waitForTimeout(80);
+    await mobileRange.fill('-201');
+    await page.waitForTimeout(260);
     ensure(!(page.url().includes('story=')), `${profile.name}: manual mobile timeline movement retained stale story state`);
     await mobileTimeline.getByRole('button', { name: '播放历史' }).click();
     ensure((await page.locator('.narrative-map-heading h2').textContent()) === '白登之围', `${profile.name}: mobile playback did not resume at the next chapter after a timeline gap`);
@@ -259,13 +274,8 @@ for (const profile of selectedProfiles) {
     ensure(page.url().includes('story='), `${profile.name}: story state was not written to the shareable URL`);
     await desktopPlay.click();
     const draggedDesktopRange = page.locator('.desktop-timeline .timeline-range');
-    await draggedDesktopRange.evaluate((element) => {
-      const input = element;
-      input.value = '-205';
-      input.dispatchEvent(new Event('input', { bubbles: true }));
-      input.dispatchEvent(new Event('change', { bubbles: true }));
-    });
-    await page.waitForTimeout(80);
+    await draggedDesktopRange.fill('-205');
+    await page.waitForTimeout(260);
     ensure(!(page.url().includes('story=')), `${profile.name}: manual desktop timeline movement retained stale story state`);
     await desktopPlay.click();
     ensure((await page.locator('.narrative-map-heading h2').textContent()) === '彭城之战', `${profile.name}: desktop playback did not resume from the dragged timeline position`);
@@ -413,6 +423,22 @@ for (const profile of selectedProfiles) {
   ensure((await page.locator('.timeline-range').first().inputValue()) === '280', `${profile.name}: Three Kingdoms endpoint URL did not restore year 280`);
   ensure(await page.getByText('西晋统一', { exact: true }).isVisible(), `${profile.name}: endpoint URL did not restore the historical breakpoint`);
   ensure(await page.locator('.narrative-map-heading h2').getByText('建业降晋与吴亡', { exact: true }).isVisible(), `${profile.name}: endpoint URL restored the wrong event`);
+  if (profile.name === 'desktop-1280') {
+    const saveDataPage = await context.newPage();
+    await saveDataPage.addInitScript(() => Object.defineProperty(navigator, 'connection', { configurable: true, value: { saveData: true, addEventListener() {}, removeEventListener() {} } }));
+    await saveDataPage.goto(`${baseUrl}/?scenario=han-three-kingdoms&year=208`, { waitUntil: 'domcontentloaded', timeout: 45_000 });
+    await saveDataPage.locator('.landmark-banner').waitFor({ state: 'visible' });
+    ensure(await saveDataPage.locator('.landmark-banner-placeholder').getByText('省流量模式').isVisible(), 'desktop-1280: Save-Data mode did not suppress landmark imagery');
+    ensure(await saveDataPage.locator('.landmark-banner img').count() === 0, 'desktop-1280: Save-Data mode still loaded a landmark image element');
+    await saveDataPage.close();
+
+    const failedImagePage = await context.newPage();
+    await failedImagePage.route('**/landmarks/red-cliffs.webp', (route) => route.abort());
+    await failedImagePage.goto(`${baseUrl}/?scenario=han-three-kingdoms&year=208`, { waitUntil: 'domcontentloaded', timeout: 45_000 });
+    await failedImagePage.locator('.landmark-banner-placeholder').waitFor({ state: 'visible' });
+    ensure(await failedImagePage.getByText('影像暂时无法加载').isVisible(), 'desktop-1280: failed landmark image did not show a readable fallback');
+    await failedImagePage.close();
+  }
   ensure(runtimeErrors.length === 0, `${profile.name}: ${runtimeErrors.join('; ')}`);
   await context.close();
 }

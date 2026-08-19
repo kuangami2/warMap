@@ -112,7 +112,10 @@ export function validateLandmarkImages(images: LandmarkImage[], data: Pick<Scena
     if (!image.path.startsWith('./') && !image.path.startsWith('/')) errors.push(`${image.id}: landmark path must be local`);
     if (image.width < 320 || image.height < 160) errors.push(`${image.id}: landmark dimensions too small`);
     if (image.focalPoint.x < 0 || image.focalPoint.x > 100 || image.focalPoint.y < 0 || image.focalPoint.y > 100) errors.push(`${image.id}: invalid focal point`);
-    if (!image.alt.trim() || !image.creator.trim() || !image.license.trim() || !image.attribution.trim()) errors.push(`${image.id}: missing image attribution metadata`);
+    if (!image.alt.trim() || !image.creator.trim() || !image.license.trim() || !image.attribution.trim() || !image.sourcePageUrl.trim() || !image.originalFileUrl.trim()) errors.push(`${image.id}: missing image attribution metadata`);
+    if (!/^https:\/\//.test(image.sourcePageUrl) || !/^https:\/\//.test(image.originalFileUrl)) errors.push(`${image.id}: image source URLs must be https`);
+    if (!['Public domain', 'CC0', 'CC BY 2.0', 'CC BY 3.0', 'CC BY 4.0', 'CC BY-SA 3.0', 'CC BY-SA 4.0'].includes(image.license)) errors.push(`${image.id}: unsupported image license`);
+    if (image.license !== 'Public domain' && image.license !== 'CC0' && !image.licenseUrl?.trim()) errors.push(`${image.id}: missing image license URL`);
     if (!image.quotation.trim() || !image.quotationCitation.trim() || !image.applicability.trim()) errors.push(`${image.id}: incomplete landmark quotation`);
     if (image.classification === 'modern-reconstruction' && !image.uncertaintyNote?.includes('现代视觉重构')) errors.push(`${image.id}: modern reconstruction missing disclaimer`);
   }

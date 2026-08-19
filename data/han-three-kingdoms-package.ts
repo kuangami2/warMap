@@ -42,7 +42,7 @@ const routeReferencePlaces: HistoricalPlace[] = [
 
 export function createHanThreeKingdomsPackage() {
   return assembleScenarioPackage({
-    manifest: { id: HAN_THREE_KINGDOMS_SCENARIO_ID, contentVersion: '2.6.0', editorialStatus: 'curated', coverageNote: '两汉至三国主线已审校；研究区域用于检索和叙事分组，不表示任何行政边界。' },
+    manifest: { id: HAN_THREE_KINGDOMS_SCENARIO_ID, contentVersion: '2.6.1', editorialStatus: 'curated', coverageNote: '两汉至三国主线已审校；研究区域用于检索和叙事分组，不表示任何行政边界。' },
     scenario: scenarios.find((scenario) => scenario.id === HAN_THREE_KINGDOMS_SCENARIO_ID)!,
     eras: hanThreeKingdomsEras,
     polities: hanThreeKingdomsPolities,

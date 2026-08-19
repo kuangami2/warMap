@@ -4,7 +4,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { geoGraticule10, geoMercator, geoPath } from 'd3-geo';
 import { Legend } from '@/components/Legend';
-import { LandmarkBackdrop } from '@/components/LandmarkBackdrop';
 import { HistoricalPlaceLayer } from '@/components/HistoricalPlaceLayer';
 import { ModernPlaceLayer } from '@/components/ModernPlaceLayer';
 import { RouteLayer } from '@/components/RouteLayer';
@@ -12,7 +11,7 @@ import { TerritoryLayer } from '@/components/TerritoryLayer';
 import { WarCloudLayer } from '@/components/WarCloudLayer';
 import { eventsForMapDetail, mapDetailForScale } from '@/lib/mapDetail';
 import { INITIAL_MAP_VIEWPORT, MAP_CENTER, MAP_HEIGHT, MAP_WIDTH, panMapViewport, type MapFocusTarget, type MapPoint, type MapViewport, zoomMapViewport } from '@/lib/mapViewport';
-import type { HistoricalPlace, LandmarkImage, Polity, TerritorySnapshot, WarEvent } from '@/lib/types';
+import type { HistoricalPlace, Polity, TerritorySnapshot, WarEvent } from '@/lib/types';
 
 const GeographyLayer = dynamic(() => import('@/components/GeographyLayer').then((module) => module.GeographyLayer), { ssr: false });
 
@@ -57,7 +56,6 @@ type HistoricalMapProps = {
   wars: WarEvent[];
   places: HistoricalPlace[];
   currentYear: number;
-  landmarkImages: LandmarkImage[];
   viewport: MapViewport;
   focusTarget?: MapFocusTarget;
   territories: TerritorySnapshot[];
@@ -98,7 +96,7 @@ function transformForViewport(viewport: MapViewport) {
   return `translate(${viewport.x} ${viewport.y}) translate(${MAP_CENTER.x} ${MAP_CENTER.y}) scale(${viewport.scale}) translate(${-MAP_CENTER.x} ${-MAP_CENTER.y})`;
 }
 
-export function HistoricalMap({ wars, places, currentYear, landmarkImages, viewport, focusTarget, territories, polities, selectedWar, hoveredWar, onSelect, onHover, layers, animations, narrativeMode = false, onLayers, onAnimations, onViewportChange }: HistoricalMapProps) {
+export function HistoricalMap({ wars, places, currentYear, viewport, focusTarget, territories, polities, selectedWar, hoveredWar, onSelect, onHover, layers, animations, narrativeMode = false, onLayers, onAnimations, onViewportChange }: HistoricalMapProps) {
   const [legendOpen, setLegendOpen] = useState(false);
   const [isInteracting, setIsInteracting] = useState(false);
   const svgRef = useRef<SVGSVGElement>(null);
@@ -293,7 +291,6 @@ export function HistoricalMap({ wars, places, currentYear, landmarkImages, viewp
         })}</g>}
       </g>
     </svg>
-    <LandmarkBackdrop images={landmarkImages} year={currentYear} selectedEventId={selectedWar?.id} enabled={layers.imagery} />
     {wars.length === 0 && <div className="map-empty-state" role="status" aria-live="polite"><strong>当前窗口暂无收录事件</strong><span>地图仍保留当前阶段的地理与势力范围示意，请继续拖动时间轴。</span></div>}
     <div className="map-toolbar" aria-label="地图显示控制" onClick={(event) => event.stopPropagation()}><div className="toolbar-group"><button type="button" className={layers.geography ? 'toolbar-active' : ''} aria-pressed={layers.geography} onClick={() => toggleLayer('geography')}>地形</button><button type="button" className={layers.places ? 'toolbar-active' : ''} aria-pressed={layers.places} onClick={() => toggleLayer('places')}>古地名</button><button type="button" className={layers.modern ? 'toolbar-active' : ''} aria-pressed={layers.modern} onClick={() => toggleLayer('modern')}>今地名</button><button type="button" className={layers.territories ? 'toolbar-active' : ''} aria-pressed={layers.territories} onClick={() => toggleLayer('territories')}>势力</button><button type="button" className={layers.clouds ? 'toolbar-active' : ''} aria-pressed={layers.clouds} onClick={() => toggleLayer('clouds')}>热区</button><button type="button" className={layers.nodes ? 'toolbar-active' : ''} aria-pressed={layers.nodes} onClick={() => toggleLayer('nodes')}>事件</button><button type="button" className={layers.routes ? 'toolbar-active' : ''} aria-pressed={layers.routes} onClick={() => toggleLayer('routes')}>路线</button><button type="button" className={layers.imagery ? 'toolbar-active' : ''} aria-pressed={layers.imagery} onClick={() => toggleLayer('imagery')}>事件影像</button></div><button type="button" className={!animations ? 'toolbar-active' : ''} aria-pressed={!animations} onClick={() => onAnimations(!animations)}>{animations ? '关闭动效' : '开启动效'}</button></div>
     <div className="zoom-toolbar" aria-label="地图缩放" onClick={(event) => event.stopPropagation()}><button type="button" onClick={() => commitViewport(zoomMapViewport(viewportRef.current, viewportRef.current.scale + .25, MAP_CENTER))} aria-label="放大地图">＋</button><button type="button" onClick={() => commitViewport(zoomMapViewport(viewportRef.current, viewportRef.current.scale - .25, MAP_CENTER))} aria-label="缩小地图">－</button><button type="button" onClick={() => commitViewport(INITIAL_MAP_VIEWPORT)} aria-label="重置地图缩放">复位</button><span className="zoom-indicator" aria-live="polite">{Math.round(displayViewport.scale * 100)}%</span></div>

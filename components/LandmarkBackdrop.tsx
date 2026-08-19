@@ -1,54 +1,21 @@
 'use client';
-
+/* eslint-disable @next/next/no-img-element -- local static WebP paths are intentionally rendered without runtime image optimization. */
 import { useEffect, useRef, useState } from 'react';
 import { landmarkForYear } from '@/lib/landmarks';
 import { formatYear } from '@/lib/timeline';
-import type { LandmarkImage } from '@/lib/types';
-
+import type { LandmarkImage, WarEvent } from '@/lib/types';
 type NetworkInformation = { saveData?: boolean; addEventListener?: (type: 'change', listener: () => void) => void; removeEventListener?: (type: 'change', listener: () => void) => void };
-
-function imageClassLabel(value: LandmarkImage['classification']) {
-  if (value === 'historical-artwork') return '历史图像';
-  if (value === 'later-artwork') return '后世创作';
-  return '现代视觉重构';
-}
-
-export function LandmarkBackdrop({ images, year, selectedEventId, enabled }: { images: LandmarkImage[]; year: number; selectedEventId?: string; enabled: boolean }) {
+function imageClassLabel(value: LandmarkImage['classification']) { if (value === 'historical-artwork') return '历史图像'; if (value === 'later-artwork') return '后世创作'; if (value === 'battle-map') return '概括战局图'; if (value === 'artifact-photo') return '现代实景参照'; return '现代视觉重构'; }
+export function LandmarkBackdrop({ images, events, year, selectedEventId, enabled }: { images: LandmarkImage[]; events: Pick<WarEvent, 'id' | 'name'>[]; year: number; selectedEventId?: string; enabled: boolean }) {
   const requested = enabled ? landmarkForYear(images, year, selectedEventId) : undefined;
-  const [displayed, setDisplayed] = useState<LandmarkImage>();
-  const [previous, setPrevious] = useState<LandmarkImage>();
-  const displayedRef = useRef<LandmarkImage>();
-  const [mediaAllowed, setMediaAllowed] = useState(false);
-
-  useEffect(() => {
-    const connection = (navigator as Navigator & { connection?: NetworkInformation }).connection;
-    const update = () => setMediaAllowed(!connection?.saveData);
-    update();
-    connection?.addEventListener?.('change', update);
-    return () => connection?.removeEventListener?.('change', update);
-  }, []);
-
-  useEffect(() => {
-    const delay = selectedEventId ? 0 : 220;
-    const timer = window.setTimeout(() => {
-      const current = displayedRef.current;
-      if (current?.id === requested?.id) return;
-      setPrevious(current);
-      displayedRef.current = requested;
-      setDisplayed(requested);
-      window.setTimeout(() => setPrevious(undefined), 520);
-    }, delay);
-    return () => window.clearTimeout(timer);
-  }, [requested, selectedEventId]);
-
+  const [displayed, setDisplayed] = useState<LandmarkImage>(); const [previous, setPrevious] = useState<LandmarkImage>(); const [mediaAllowed, setMediaAllowed] = useState(true); const [imageFailed, setImageFailed] = useState(false); const displayedRef = useRef<LandmarkImage>();
+  useEffect(() => { const connection = (navigator as Navigator & { connection?: NetworkInformation }).connection; const update = () => setMediaAllowed(!connection?.saveData); update(); connection?.addEventListener?.('change', update); return () => connection?.removeEventListener?.('change', update); }, []);
+  useEffect(() => { const timer = window.setTimeout(() => { if (displayedRef.current?.id === requested?.id) return; setPrevious(displayedRef.current); displayedRef.current = requested; setDisplayed(requested); setImageFailed(false); window.setTimeout(() => setPrevious(undefined), 420); }, selectedEventId ? 0 : 220); return () => window.clearTimeout(timer); }, [requested, selectedEventId]);
+  useEffect(() => { if (!displayed || !mediaAllowed) return; const next = images.filter((image) => image.displayYear > year).sort((left, right) => left.displayYear - right.displayYear)[0]; if (!next) return; const preload = new Image(); preload.src = next.path; }, [displayed, images, mediaAllowed, year]);
   if (!enabled || !displayed) return null;
-  const detail = <><q>{displayed.quotation}</q><cite>{displayed.quotationCitation}</cite><span>{displayed.applicability}</span><small>{imageClassLabel(displayed.classification)} · {displayed.attribution} · {displayed.license}{displayed.uncertaintyNote ? ` · ${displayed.uncertaintyNote}` : ''}</small></>;
-  return <div className="landmark-backdrop" data-landmark-id={displayed.id}>
-    <div className="landmark-image-stack" aria-hidden="true">
-      {mediaAllowed && previous && <div className="landmark-image landmark-image-leaving" style={{ backgroundImage: `url(${previous.path})`, backgroundPosition: `${previous.focalPoint.x}% ${previous.focalPoint.y}%` }} />}
-      {mediaAllowed && <div key={displayed.id} className="landmark-image landmark-image-entering" role="img" aria-label={displayed.alt} style={{ backgroundImage: `url(${displayed.path})`, backgroundPosition: `${displayed.focalPoint.x}% ${displayed.focalPoint.y}%` }} />}
-    </div>
-    <div className="landmark-quotation landmark-quotation-desktop"><p className="eyebrow">{formatYear(displayed.displayYear)} · 事件影像</p>{detail}</div>
-    <details className="landmark-quotation landmark-quotation-mobile"><summary>{formatYear(displayed.displayYear)} · {displayed.quotation}</summary><div>{detail}</div></details>
-  </div>;
+  const title = events.find((event) => event.id === displayed.eventId)?.name ?? '事件影像';
+  return <section className="landmark-banner" data-landmark-id={displayed.id} aria-labelledby={`landmark-title-${displayed.id}`}>
+    <div className="landmark-banner-media">{mediaAllowed && previous && <img className="landmark-banner-image landmark-banner-image-leaving" src={previous.path} alt="" aria-hidden="true" />}{mediaAllowed && !imageFailed && <img key={displayed.id} className="landmark-banner-image landmark-banner-image-entering" src={displayed.path} alt={displayed.alt} onError={() => setImageFailed(true)} decoding="async" />}{(!mediaAllowed || imageFailed) && <div className="landmark-banner-placeholder" role="img" aria-label={`${displayed.alt}（影像未加载）`}><strong>{imageFailed ? '影像暂时无法加载' : '省流量模式'}</strong><span>{imageFailed ? '史料文字仍可继续阅读。' : '已保留事件与史料文字，未加载图片。'}</span></div>}<span className="landmark-banner-type">{imageClassLabel(displayed.classification)}</span></div>
+    <div className="landmark-banner-copy"><div className="landmark-banner-heading"><div><p className="eyebrow">{formatYear(displayed.displayYear)} · 标志性事件</p><h2 id={`landmark-title-${displayed.id}`}>{title || '事件影像'}</h2></div><span className="landmark-banner-license">{displayed.license}</span></div><blockquote><q>{displayed.quotation}</q><cite>{displayed.quotationCitation}</cite></blockquote><p className="landmark-banner-note">{displayed.applicability}</p>{displayed.uncertaintyNote && <p className="landmark-banner-uncertainty">{displayed.uncertaintyNote}</p>}<p className="landmark-banner-credit">{displayed.attribution} · <a href={displayed.sourcePageUrl} target="_blank" rel="noreferrer">查看原始文件页</a>{displayed.licenseUrl && <> · <a href={displayed.licenseUrl} target="_blank" rel="noreferrer">许可文本</a></>}</p></div>
+  </section>;
 }
