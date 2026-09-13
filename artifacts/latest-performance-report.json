@@ -1,8 +1,8 @@
 {
   "baseline": "pre-v2.1.0 development baseline",
-  "totalBytes": 2432407,
-  "javaScriptGzipBytes": 455540,
-  "initialJavaScriptGzipBytes": 424972,
+  "totalBytes": 2437884,
+  "javaScriptGzipBytes": 456269,
+  "initialJavaScriptGzipBytes": 425701,
   "largestAsyncChunkGzipBytes": 28605,
   "largestAssetBytes": 554450,
   "largestAsset": "out/_next/static/chunks/35awe5ikk-o8e.js",

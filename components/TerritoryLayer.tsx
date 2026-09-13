@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
+import { memo, useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import { geoPath, type GeoProjection } from 'd3-geo';
 import type { Polity, TerritorySnapshot } from '@/lib/types';
 import { layoutTerritoryLabels } from '@/lib/territoryLabels';
@@ -9,7 +9,7 @@ type DisplayedTerritory = { snapshot: TerritorySnapshot; phase: 'current' | 'exi
 
 const controlLabel = { core: '核心控制区', influence: '主要影响区', contested: '争夺区', activity: '活动范围' };
 
-export function TerritoryLayer({ territories, polities, projection, activePolityIds, animated, zoom }: { territories: TerritorySnapshot[]; polities: Polity[]; projection: GeoProjection; activePolityIds: string[]; animated: boolean; zoom: number }) {
+export const TerritoryLayer = memo(function TerritoryLayer({ territories, polities, projection, activePolityIds, animated, zoom }: { territories: TerritorySnapshot[]; polities: Polity[]; projection: GeoProjection; activePolityIds: string[]; animated: boolean; zoom: number }) {
   const isMobile = useSyncExternalStore(
     (onStoreChange) => {
       const media = window.matchMedia('(max-width: 767px)');
@@ -67,4 +67,4 @@ export function TerritoryLayer({ territories, polities, projection, activePolity
       </g>;
     })}
   </g>;
-}
+});
